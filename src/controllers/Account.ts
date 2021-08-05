@@ -9,7 +9,6 @@ export class AccountController {
 
   @Get("/")
   @(Returns(200, Account).Description("An array of Account"))
-  @Security("calendar_auth", "write:calendar", "read:calendar")
   async getAllAccounts(): Promise<Account[]> {
     try {
       const accounts = await this.accountervice.getAllAccounts();
