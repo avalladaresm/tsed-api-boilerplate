@@ -1,23 +1,41 @@
-import {Column, CreateDateColumn, Entity, Generated, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn} from "typeorm";
+import {Example, Property} from "@tsed/schema";
+import {Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryColumn, UpdateDateColumn} from "typeorm";
+import {Role} from "./Role";
 import {Account} from "./Account";
 
 @Entity({name: "AccountRole"})
 export class AccountRole {
-  @PrimaryGeneratedColumn("uuid", {name: "id"})
+  @Property()
+  @PrimaryColumn("uuid", {name: "id", default: () => "newid()"})
   id: string;
 
-  @Generated("increment")
+  @Property()
+  @Example("1")
+  @Column("int", {generated: "increment"})
   idInc: number;
 
-  @OneToMany(() => Account, (account) => account.accountRoleId)
-  accounts: Account[];
+  @PrimaryColumn()
+  accountId: number;
 
-  @Column("varchar", {length: 255, unique: true})
-  name: string;
+  @Property()
+  @ManyToOne(() => Account, (account) => account.accountRoles, {onDelete: "CASCADE"})
+  account: Account;
 
+  @PrimaryColumn()
+  roleName: string;
+
+  @Property()
+  @ManyToOne(() => Role, {eager: true, onDelete: "CASCADE", onUpdate: "CASCADE"})
+  @JoinColumn({name: "roleName", referencedColumnName: "name"})
+  role: Role;
+
+  @Property()
+  @Example("2021-08-05T03:27:18.690Z")
   @CreateDateColumn()
   createdAt: string;
 
+  @Property()
+  @Example("2021-10-05T03:27:18.690Z")
   @UpdateDateColumn()
   updatedAt: string;
 }

@@ -1,0 +1,1 @@
+export const MSSQL_DUP_ENTRY_ERROR_NUMBER = 2627;

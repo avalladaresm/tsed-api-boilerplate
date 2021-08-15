@@ -1,23 +1,83 @@
-import {Example, Hidden, Property, Required} from "@tsed/schema";
-import {Column, CreateDateColumn, Entity, Generated, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn} from "typeorm";
+import {Example, Groups, Hidden, Property} from "@tsed/schema";
+import {Column, CreateDateColumn, Entity, OneToMany, PrimaryColumn, Unique, UpdateDateColumn} from "typeorm";
+import {BeforeDeserialize} from "@tsed/json-mapper";
+import {ValidationError} from "@tsed/common";
 import {AccountRole} from "./AccountRole";
 
+@BeforeDeserialize((data: Record<string, unknown>) => {
+  let error;
+  if (!data.name) {
+    error = new ValidationError("Validation error", [{message: "Field 'name' is required."}]);
+    throw error;
+  } else {
+    return data;
+  }
+})
+@Groups<Account>({
+  create: [
+    "name",
+    "phoneNumber",
+    "dob",
+    "country",
+    "state",
+    "city",
+    "email",
+    "password",
+    "gender",
+    "identificationDocument",
+    "identificationDocumentType"
+  ],
+  update: [
+    "name",
+    "phoneNumber",
+    "dob",
+    "country",
+    "state",
+    "city",
+    "gender",
+    "identificationDocument",
+    "identificationDocumentType"
+  ],
+  read: [
+    "id",
+    "idInc",
+    "accountRoles",
+    "name",
+    "phoneNumber",
+    "dob",
+    "country",
+    "state",
+    "city",
+    "email",
+    "gender",
+    "identificationDocument",
+    "identificationDocumentType",
+    "isVerified",
+    "isActive",
+    "createdAt",
+    "updatedAt"
+  ]
+})
 @Entity({name: "Account"})
+@Unique("UQ_id", ["id"])
+@Unique("UQ_idInc", ["idInc"])
+@Unique("UQ_phoneNumber", ["phoneNumber"])
+@Unique("UQ_email", ["email"])
+@Unique("UQ_identificationDocument", ["identificationDocument"])
 export class Account {
   @Property()
   @Example("525A60BE-6AF5-EB11-B563-DC984098D2B6")
-  @PrimaryGeneratedColumn("uuid", {name: "id"})
+  @PrimaryColumn("uuid", {name: "id", default: () => "newid()"})
   id: string;
 
   @Property()
   @Example("1")
-  @Generated("increment")
+  @Column("int", {generated: "increment"})
   idInc: number;
 
   @Property()
-  @Example("2")
-  @ManyToOne(() => AccountRole, (accountRole) => accountRole.id)
-  accountRole: AccountRole;
+  @OneToMany(() => AccountRole, (accountRoles) => accountRoles.account)
+  accountRoles: AccountRole[];
 
   @Property()
   @Example("Daryl Schultz")
@@ -26,7 +86,7 @@ export class Account {
 
   @Property()
   @Example("+1 (933) 071-1910")
-  @Column("varchar", {length: 25, unique: true, nullable: false})
+  @Column("varchar", {length: 25, nullable: false})
   phoneNumber: string;
 
   @Property()
@@ -36,7 +96,6 @@ export class Account {
 
   @Property()
   @Example("Latvia")
-  @Required()
   @Column("varchar", {length: 255, nullable: false})
   country: string;
 
@@ -71,6 +130,7 @@ export class Account {
   isVerified: boolean;
 
   @Property(true)
+  @Example(true)
   @Column("bit", {default: 1})
   isActive: boolean;
 

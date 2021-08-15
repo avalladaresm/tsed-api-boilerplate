@@ -1,6 +1,6 @@
 import {Factory, Seeder} from "typeorm-seeding";
 import {Connection} from "typeorm";
-import {Account} from "../../entities/Account";
+import {Account} from "../entities/Account";
 import faker from "faker";
 
 export default class CreateAccounts implements Seeder {
@@ -16,7 +16,9 @@ export default class CreateAccounts implements Seeder {
           dob: new Date(faker.date.past()).toString(),
           country: faker.address.country(),
           email: faker.internet.email(),
-          password: faker.internet.password()
+          password: faker.internet.password(),
+          identificationDocument: faker.internet.userName(),
+          identificationDocumentType: "Cédula"
         },
         {
           name: faker.name.firstName() + " " + faker.name.lastName(),
@@ -24,7 +26,9 @@ export default class CreateAccounts implements Seeder {
           dob: new Date(faker.date.past()).toString(),
           country: faker.address.country(),
           email: faker.internet.email(),
-          password: faker.internet.password()
+          password: faker.internet.password(),
+          identificationDocument: faker.internet.userName(),
+          identificationDocumentType: "Cédula"
         },
         {
           name: faker.name.firstName() + " " + faker.name.lastName(),
@@ -32,7 +36,9 @@ export default class CreateAccounts implements Seeder {
           dob: new Date(faker.date.past()).toString(),
           country: faker.address.country(),
           email: faker.internet.email(),
-          password: faker.internet.password()
+          password: faker.internet.password(),
+          identificationDocument: faker.internet.userName(),
+          identificationDocumentType: "Cédula"
         },
         {
           name: faker.name.firstName() + " " + faker.name.lastName(),
@@ -40,7 +46,9 @@ export default class CreateAccounts implements Seeder {
           dob: new Date(faker.date.past()).toString(),
           country: faker.address.country(),
           email: faker.internet.email(),
-          password: faker.internet.password()
+          password: faker.internet.password(),
+          identificationDocument: faker.internet.userName(),
+          identificationDocumentType: "Cédula"
         },
         {
           name: faker.name.firstName() + " " + faker.name.lastName(),
@@ -48,7 +56,9 @@ export default class CreateAccounts implements Seeder {
           dob: new Date(faker.date.past()).toString(),
           country: faker.address.country(),
           email: faker.internet.email(),
-          password: faker.internet.password()
+          password: faker.internet.password(),
+          identificationDocument: faker.internet.userName(),
+          identificationDocumentType: "Cédula"
         }
       ])
       .execute();

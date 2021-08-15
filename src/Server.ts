@@ -11,6 +11,9 @@ import "@tsed/swagger";
 import "@tsed/typeorm";
 import {config, rootDir} from "./config";
 import {IndexCtrl} from "./controllers/pages/IndexController";
+import {createConnection, getConnectionOptions} from "typeorm";
+import "./filters/ResourceNotFoundFilter";
+import {CustomNamingStrategy} from "./CustomNamingStrategy";
 
 @Configuration({
   ...config,
@@ -21,6 +24,7 @@ import {IndexCtrl} from "./controllers/pages/IndexController";
     "/v1/docs": [`${rootDir}/controllers/**/*.ts`],
     "/": [IndexCtrl]
   },
+  componentsScan: [`${rootDir}/middlewares/**/*.ts`],
   swagger: [
     {
       path: "/v1/docs",
@@ -39,6 +43,12 @@ export class Server {
 
   @Configuration()
   settings: Configuration;
+
+  $beforeInit(): void {
+    getConnectionOptions()
+      .then((connectionOptions) => createConnection({...connectionOptions, namingStrategy: new CustomNamingStrategy()}))
+      .catch((err) => console.log("connection error: ", err));
+  }
 
   $beforeRoutesInit(): void {
     this.app
