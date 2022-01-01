@@ -13,6 +13,7 @@ import { config, rootDir } from "./config";
 import {IndexCtrl} from "./controllers/pages/IndexController";
 import "./filters/ResourceNotFoundFilter";
 import { CustomNamingStrategy } from "./CustomNamingStrategy";
+import { createConnection, getConnectionOptions } from "typeorm";
 
 @Configuration({
 	...config,
@@ -20,8 +21,9 @@ import { CustomNamingStrategy } from "./CustomNamingStrategy";
 	httpPort: process.env.PORT || 4000,
 	httpsPort: process.env.PORT,
 	mount: {
-		"/v1/docs": [`${rootDir}/controllers/**/*.ts`]
+		"/v1/docs": [`${rootDir}/controllers/**/*.ts`],
     "/": [IndexCtrl]
+	},
 	componentsScan: [`${rootDir}/middlewares/**/*.ts`],
 	swagger: [
 		{
