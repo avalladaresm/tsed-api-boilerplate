@@ -1,17 +1,30 @@
-import {Service} from "@tsed/common";
+import {PlatformResponse, Service} from "@tsed/common";
+import { BadRequest, Conflict, Exception, NotFound } from "@tsed/exceptions";
 import {TypeORMService} from "@tsed/typeorm";
-import {MSSQL_DUP_ENTRY_ERROR_NUMBER} from "src/constants/mssql_errors";
+import {MSSQL_DUP_ENTRY_ERROR_NUMBER, MSSQL_MALFORMED_GUID_ERROR_NUMBER} from "src/constants/mssql_errors";
 import {Account} from "src/entities/Account";
 import {AccountRole} from "src/entities/AccountRole";
 import {DuplicateEntry} from "src/exceptions/DuplicateEntry";
 import {EntryNotFound} from "src/exceptions/EntryNotFound";
-import {ConnectionManager, DeleteResult, getConnectionManager, getManager} from "typeorm";
+import {ConnectionManager, DeleteResult, getConnectionManager, getManager, getRepository} from "typeorm";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import { PendingAccountVerificationService } from "./PendingAccountVerification";
+import { PendingAccountVerification } from "src/entities/PendingAccountVerification";
+import { SignUpResponse } from "src/models/Auth";
+import { MalformedGuid } from "src/exceptions/MalformedGuid";
+import { sendEmail } from "src/utils/Mailer";
 
 @Service()
 export class AccountService {
   private connection: ConnectionManager;
-  constructor(private typeORMService: TypeORMService) {}
+  constructor(
+    private typeORMService: TypeORMService,
+    private pendingAccountVerificationService: PendingAccountVerificationService
+  ) {}
   private entityManager = getManager();
+  private accountRepository = getRepository(Account);
+  private accountRoleRepository = getRepository(AccountRole);
 
   $afterRoutesInit(): void {
     this.connection = getConnectionManager();
@@ -28,26 +41,95 @@ export class AccountService {
     }
   }
 
-  async createAccount(data: Account): Promise<Account> {
+  async createAccount(data: Account, response: PlatformResponse): Promise<SignUpResponse | undefined> {
     try {
+      let error: Exception = {} as Exception;
       const createdAccount = await getManager().transaction(async (transactionalEntityManager) => {
-        const account = await transactionalEntityManager.insert(Account, data);
-        const roles = ["admin", "client"];
+        const accountByEmail = await this.getAccountByEmail(data.email);
+        if (accountByEmail) {
+          error = new Conflict('Este correo ya se encuentra en uso')
+          error.errors = [{ code: 'E0008' }]
+          throw (error)
+        }
+        
+        const accountByPhoneNumber = await this.getAccountByPhoneNumber(data.phoneNumber);
+        if (accountByPhoneNumber) {
+          error = new Conflict('Este número de teléfono ya se encuentra en uso')
+          error.errors = [{ code: 'E0009' }]
+          throw (error)
+        }
+
+        data.password = bcrypt.hashSync(data.password, 10)
+        if (!data.password) {
+          error = new BadRequest('Ocurrio un error al almacenar la clave, por favor intente de nuevo')
+          error.errors = [{ code: 'E0010' }]
+          throw (error)
+        }
+
+      /* data.securityQuestionAnswer = bcrypt.hashSync(data.securityQuestionAnswer.toLowerCase(), 10)
+        if (!data.securityQuestionAnswer) {
+          error = new BadRequest('Ocurrio un error al encriptar la pregunta de seguridad, por favor intente de nuevo')
+          error.errors = [{ code: 'E0011' }]
+          throw (error)
+        } */
+
+        const insertAccount = await transactionalEntityManager.insert(Account, data);
+        if (!insertAccount) {
+          error = new BadRequest('No se pudo crear la cuenta!')
+          error.errors = [{ code: 'E0013', message: 'No se pudo crear la cuenta!' }]
+          throw (error)
+        }
+        const { generatedMaps: [account] } = insertAccount
+        const roles = ["admin", "clientadmin"];
         const accountRoles: AccountRole[] = [];
         for (const role of roles) {
           const _accountRole = await transactionalEntityManager.insert(AccountRole, {
             roleName: role,
-            accountId: account.generatedMaps[0].id
+            accountId: account.id
           });
-          accountRoles.push(_accountRole.generatedMaps[0] as AccountRole);
+          accountRoles.push(_accountRole.identifiers[0].roleName);
         }
-        return account;
+        account.accountRoles = accountRoles;
+        const signedData = { accountId: account.id, role: account.accountRoles, email: data.email };
+
+        if (!process.env.JWT_SECRET) {
+          error = new BadRequest('No se pudo determinar las credenciales!')
+          error.errors = [{ code: 'E0013', message: 'No se pudo determinar las credenciales!' }]
+          throw (error)
+        }
+
+        const token = jwt.sign({ signedData }, process.env.JWT_SECRET, {
+          expiresIn: Number(process.env.JWT_EXPIRESIN_SIGNUP),
+          algorithm: "HS512"
+        });
+        if (!token) {
+          error = new BadRequest('No se pudo encriptar los datos de registro!')
+          error.errors = [{ code: 'E0014', message: 'No se pudo encriptar los datos de registro!' }]
+          throw (error)
+        }
+
+        const decodedToken: jwt.JwtPayload = jwt.verify(token, process.env.JWT_SECRET) as jwt.JwtPayload;
+        if (!decodedToken || !decodedToken.exp) {
+          error = new BadRequest('No se pudo determinar los datos de la cuenta!')
+          error.errors = [{ code: 'E0015', message: 'No se pudo determinar los datos de la cuenta!' }]
+          throw (error)
+        }
+
+        const expDate = new Date(decodedToken.exp * 1000);
+        await transactionalEntityManager.delete(PendingAccountVerification, { accountId: account.id });
+        await transactionalEntityManager.insert(PendingAccountVerification, { accountId: account.id, accessToken: token, exp: expDate });
+        return { accountId: account.id, accessToken: token};
       });
 
-      const _createdAccount = await this.entityManager.findOneOrFail(Account, createdAccount.generatedMaps[0].id, {
-        relations: ["accountRoles"]
+      const _account = await this.getAccountById(createdAccount.accountId);
+      const emailHtml = await response.render('verifyAccount', {
+        name: data.name, link: `${process.env.API_BASE_URL}/auth/verify?id=${createdAccount.accountId}&accessToken=${createdAccount.accessToken}`
       });
-      return _createdAccount;
+      if (!emailHtml)
+        throw new NotFound('HBS error')
+
+      await sendEmail({ to: data.email, subject: 'Verifica tu cuenta', html: emailHtml })
+      return { account: _account, accessToken: createdAccount.accessToken };
     } catch (e) {
       if (e?.number === MSSQL_DUP_ENTRY_ERROR_NUMBER) {
         throw new DuplicateEntry(e?.message);
@@ -58,7 +140,58 @@ export class AccountService {
 
   async getAccountById(id: string): Promise<Account | undefined> {
     try {
-      const account = await this.entityManager.findOneOrFail(Account, id);
+      const account = await this.accountRepository.createQueryBuilder("account")
+        .innerJoinAndSelect("account.accountRoles", "accountRole")
+        .where("account.id = :id")
+        .setParameter("id", id)
+        .getOne();
+      return account;
+    } catch (e) {
+      if (e?.number === MSSQL_DUP_ENTRY_ERROR_NUMBER) {
+        throw new DuplicateEntry(e?.message);
+      }
+      else if (e?.number === MSSQL_MALFORMED_GUID_ERROR_NUMBER) {
+        throw new MalformedGuid();
+      }
+      throw e;
+    }
+  }
+
+  async getAccountByEmail(email: string): Promise<Account | undefined> {
+    try {
+      console.log("em", email)
+      const account = await this.accountRepository.createQueryBuilder("account")
+        .where("account.email = :email", { email: email })
+        .getOne();
+      return account;
+    } catch (e) {
+      if (e?.name === "EntityNotFoundError") {
+        throw new EntryNotFound(`Account with email: ${email} does not exist.`);
+      }
+      throw e;
+    }
+  }
+
+  async getAccountByPhoneNumber(phoneNumber: string): Promise<Account | undefined> {
+    try {
+      const account = await this.accountRepository.createQueryBuilder("account")
+        .where("account.phoneNumber = :phoneNumber", { phoneNumber: phoneNumber })
+        .getOne();
+      return account;
+    } catch (e) {
+      if (e?.name === "EntityNotFoundError") {
+        throw new EntryNotFound(`Account with phone number: ${phoneNumber} does not exist.`);
+      }
+      throw e;
+    }
+  }
+
+  async getAccountRoles(id: string): Promise<AccountRole[] | undefined> {
+    try {
+      const account = await this.accountRoleRepository.createQueryBuilder("accountRole")
+        .where("accountRole.accountId = :id", { id: id })
+        .select(["accountRole.roleName"])
+        .getMany();
       return account;
     } catch (e) {
       if (e?.name === "EntityNotFoundError") {

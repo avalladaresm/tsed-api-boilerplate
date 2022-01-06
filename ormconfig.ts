@@ -18,5 +18,8 @@ export default {
 		entitiesDir: process.env.API_TYPEORM_ENTITIES_DIR,
 		migrationsDir: process.env.API_TYPEORM_MIGRATIONS_DIR
 	},
-	namingStrategy: new CustomNamingStrategy()
+	namingStrategy: new CustomNamingStrategy(),
+	options: {
+		useUTC: true,
+	}
 };

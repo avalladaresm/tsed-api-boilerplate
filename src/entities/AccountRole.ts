@@ -1,9 +1,18 @@
-import {Example, Property} from "@tsed/schema";
+import {Example, Groups, Property} from "@tsed/schema";
 import {Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryColumn, UpdateDateColumn} from "typeorm";
 import {Role} from "./Role";
 import {Account} from "./Account";
 
 @Entity({name: "AccountRole"})
+@Groups<AccountRole>({
+  read: [
+    "id",
+    "idInc",
+    "roleName",
+    "createdAt",
+    "updatedAt"
+  ]
+})
 export class AccountRole {
   @Property()
   @PrimaryColumn("uuid", {name: "id", default: () => "newid()"})
@@ -22,6 +31,7 @@ export class AccountRole {
   account: Account;
 
   @PrimaryColumn()
+  @Property()
   roleName: string;
 
   @Property()

@@ -1,13 +1,15 @@
 import {Example, Groups, Hidden, Property} from "@tsed/schema";
-import {Column, CreateDateColumn, Entity, OneToMany, PrimaryColumn, Unique, UpdateDateColumn} from "typeorm";
+import {Column, CreateDateColumn, Entity, OneToMany, OneToOne, PrimaryColumn, Unique, UpdateDateColumn} from "typeorm";
 import {BeforeDeserialize} from "@tsed/json-mapper";
 import {ValidationError} from "@tsed/common";
 import {AccountRole} from "./AccountRole";
+import { PendingAccountVerification } from "./PendingAccountVerification";
+import { ForgottenPasswordOtpHash } from "./ForgottenPasswordOtpHash";
+import { AuthLog } from "./AuthLog";
 
 @BeforeDeserialize((data: Record<string, unknown>) => {
-  let error;
   if (!data.name) {
-    error = new ValidationError("Validation error", [{message: "Field 'name' is required."}]);
+    const error = new ValidationError("Validation error", [{message: "Field 'name' is required."}]);
     throw error;
   } else {
     return data;
@@ -62,6 +64,7 @@ import {AccountRole} from "./AccountRole";
 @Unique("UQ_id", ["id"])
 @Unique("UQ_idInc", ["idInc"])
 @Unique("UQ_phoneNumber", ["phoneNumber"])
+@Unique("UQ_username", ["username"])
 @Unique("UQ_email", ["email"])
 @Unique("UQ_identificationDocument", ["identificationDocument"])
 export class Account {
@@ -78,6 +81,16 @@ export class Account {
   @Property()
   @OneToMany(() => AccountRole, (accountRoles) => accountRoles.account)
   accountRoles: AccountRole[];
+
+  @Property()
+  @OneToMany(() => AuthLog, (authLogs) => authLogs.account)
+  authLogs: AuthLog[];
+
+  @OneToOne(() => PendingAccountVerification)
+  pendingAccountVerification: PendingAccountVerification;
+
+  @OneToOne(() => ForgottenPasswordOtpHash)
+  forgottenPasswordOtpHash: ForgottenPasswordOtpHash;
 
   @Property()
   @Example("Daryl Schultz")
@@ -108,6 +121,11 @@ export class Account {
   @Example("")
   @Column("varchar", {length: 255, nullable: true})
   city: string;
+
+  @Property()
+  @Example("Jonas23")
+  @Column("varchar", {length: 255, nullable: true})
+  username: string;
 
   @Property()
   @Example("Jonas23@yahoo.com")

@@ -10,10 +10,23 @@ import "@tsed/ajv";
 import "@tsed/swagger";
 import "@tsed/typeorm";
 import { config, rootDir } from "./config";
-import {IndexCtrl} from "./controllers/pages/IndexController";
 import "./filters/ResourceNotFoundFilter";
-import { CustomNamingStrategy } from "./CustomNamingStrategy";
-import { createConnection, getConnectionOptions } from "typeorm";
+import { OpenSpec3 } from "@tsed/openspec";
+
+const spec: Partial<OpenSpec3> = {
+  components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT'
+      }
+    }
+  },
+  security: [{
+    bearerAuth: []
+  }]
+}
 
 @Configuration({
 	...config,
@@ -21,20 +34,29 @@ import { createConnection, getConnectionOptions } from "typeorm";
 	httpPort: process.env.PORT || 4000,
 	httpsPort: process.env.PORT,
 	mount: {
-		"/v1/docs": [`${rootDir}/controllers/**/*.ts`],
-    "/": [IndexCtrl]
+		"/v1/docs": [`${rootDir}/controllers/**/*.ts`]
 	},
 	componentsScan: [`${rootDir}/middlewares/**/*.ts`],
 	swagger: [
 		{
 			path: "/v1/docs",
-			specVersion: "3.0.1"
+			specVersion: "3.0.1",
+      spec: spec,
 		}
 	],
-	views: {
-		root: `${rootDir}/../views`,
-		viewEngine: "ejs"
-	},
+	viewsDir: `${rootDir}/views`,
+  views: {
+    root: `${rootDir}/views`,
+    viewEngine: 'ejs',
+    extensions: {
+      'ejs': 'ejs',
+    }
+  },
+  statics: {
+    "/": [{
+        root: `${rootDir}/public`,
+      }]
+  },
 	exclude: ["**/*.spec.ts"]
 })
 export class Server {
@@ -43,14 +65,6 @@ export class Server {
 
 	@Configuration()
 	settings: Configuration;
-
-	$beforeInit(): void {
-		getConnectionOptions()
-			.then((connectionOptions) =>
-				createConnection({ ...connectionOptions, namingStrategy: new CustomNamingStrategy() })
-			)
-			.catch((err) => console.log("connection error: ", err));
-	}
 
 	$beforeRoutesInit(): void {
 		this.app

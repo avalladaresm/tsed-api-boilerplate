@@ -1,6 +1,7 @@
-import {BodyParams, Controller, Delete, Get, PathParams, Post, Put} from "@tsed/common";
+import {BodyParams, Controller, Delete, Get, PathParams, PlatformResponse, Post, Put, QueryParams, Res} from "@tsed/common";
 import {Groups, Returns, Status, Summary} from "@tsed/schema";
 import {Account} from "src/entities/Account";
+import { SignUpResponse } from "src/models/Auth";
 import {CustomError} from "src/models/CustomError";
 import {AccountService} from "src/services/Account";
 import {DeleteResult} from "typeorm";
@@ -25,9 +26,12 @@ export class AccountController {
   @Summary("Creates an account")
   @(Returns(201, Account).Groups("read").Description("Returns the instance of the created account"))
   @(Status(400, CustomError).Description("Validation error or data is malformed"))
-  async createAccount(@BodyParams() @Groups("create") data: Account): Promise<Account> {
+  async createAccount(
+    @BodyParams() @Groups("create") data: Account,
+    @Res() response: PlatformResponse
+  ): Promise<SignUpResponse | undefined> {
     try {
-      const account = await this.accountService.createAccount(data);
+      const account = await this.accountService.createAccount(data, response);
       return account;
     } catch (e) {
       throw e;
@@ -40,6 +44,18 @@ export class AccountController {
   async getAccountById(@PathParams("id") id: string): Promise<Account | undefined> {
     try {
       const account = await this.accountService.getAccountById(id);
+      return account;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  @Get("/account")
+  @Summary("Gets an account by email")
+  @(Returns(200, Account).Groups("read").Description("Returns an account by email"))
+  async getAccountByEmail(@QueryParams("email") email: string): Promise<Account | undefined> {
+    try {
+      const account = await this.accountService.getAccountByEmail(email);
       return account;
     } catch (e) {
       throw e;
