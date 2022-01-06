@@ -107,7 +107,7 @@ export class AuthService {
     }
   }
 
-  async verify(verificationData: VerificationData, res: PlatformResponse): Promise<VerifiedAccount | any> {
+  async verify(verificationData: VerificationData, res: PlatformResponse): Promise<boolean> {
     try {
       let error: Exception = {} as Exception;
       const { accountId, accessToken } = verificationData;
@@ -151,7 +151,7 @@ export class AuthService {
             throw (error)
           }
           const decoded: SignedAuthenticationJWTData = jwt.verify(accessToken, process.env.JWT_SECRET) as SignedAuthenticationJWTData
-          if (accountId === decoded.signedData.userId && accessToken === pendingAccountVerification.accessToken) {
+          if (accountId === decoded.signedData.accountId && accessToken === pendingAccountVerification.accessToken) {
             const updateAccountIsVerifiedResult = await transactionalEntityManager.createQueryBuilder(Account, "account")
               .update({isVerified: true})
               .where("account.id = :id")

@@ -44,7 +44,7 @@ export class AuthController {
   async verify(
     @BodyParams() verificationData: VerificationData,
     @Res () res: PlatformResponse
-  ): Promise<PlatformResponse | string | undefined> {
+  ): Promise<boolean> {
     try {
       const result = await this.authService.verify(verificationData, res)
       return result

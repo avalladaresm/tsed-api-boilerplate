@@ -20,7 +20,7 @@ export class PendingAccountVerificationService {
     this.connection = getConnectionManager();
   }
 
-  async createPendingAccountVerification(data: PendingAccountVerification): Promise<PendingAccountVerification | undefined> {
+/*   async createPendingAccountVerification(data: PendingAccountVerification): Promise<PendingAccountVerification | undefined> {
     try {
       const pendingAccountVerification = await this.entityManager.insert(PendingAccountVerification, data);
       return pendingAccountVerification;
@@ -30,7 +30,7 @@ export class PendingAccountVerificationService {
       }
       throw e;
     }
-  }
+  } */
 
   async getPendingAccountVerificationByAccountId(accountId: string): Promise<Account | undefined> {
     try {

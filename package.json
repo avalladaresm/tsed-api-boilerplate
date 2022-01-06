@@ -3,7 +3,7 @@
 	"version": "0.0.1",
 	"description": "",
 	"scripts": {
-		"build": "npm run tsc --project tsconfig.compile.json",
+		"build": "npx tsc --project tsconfig.compile.json",
 		"build:w": "tsc --project tsconfig.compile.json -w",
 		"start": "tsnd --inspect --ignore-watch node_modules --respawn --transpile-only -r tsconfig-paths/register src/index.ts",
 		"start:prod": "cross-env NODE_ENV=production node dist/index.js",
@@ -57,6 +57,7 @@
 		"@types/cookie-parser": "^1.4.2",
 		"@types/cors": "^2.8.12",
 		"@types/express": "^4.17.13",
+		"@types/faker": "^5.5.9",
 		"@types/jest": "^27.4.0",
 		"@types/jsonwebtoken": "^8.5.6",
 		"@types/method-override": "^0.0.32",
