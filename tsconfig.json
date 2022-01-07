@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"baseUrl": ".",
 		"module": "commonjs",
-		"target": "esnext",
+		"target": "es6",
 		"sourceMap": true,
 		"declaration": false,
 		"experimentalDecorators": true,
@@ -20,7 +20,7 @@
 		"noEmit": true,
 		"esModuleInterop": true,
 		"resolveJsonModule": true,
-		"lib": ["es7", "dom", "ESNext.AsyncIterable"],
+		"lib": ["es6", "dom", "ESNext.AsyncIterable"],
 		"typeRoots": ["./node_modules/@types"]
 	},
 	"include": ["src/**/*.ts"],

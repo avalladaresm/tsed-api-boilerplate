@@ -1,11 +1,11 @@
 import {Service} from "@tsed/common";
 import {TypeORMService} from "@tsed/typeorm";
-import {MSSQL_DUP_ENTRY_ERROR_NUMBER} from "src/constants/mssql_errors";
-import {Account} from "src/entities/Account";
-import {AccountRole} from "src/entities/AccountRole";
-import { PendingAccountVerification } from "src/entities/PendingAccountVerification";
-import {DuplicateEntry} from "src/exceptions/DuplicateEntry";
-import {EntryNotFound} from "src/exceptions/EntryNotFound";
+import {MSSQL_DUP_ENTRY_ERROR_NUMBER} from "../constants/mssql_errors";
+import {Account} from "../entities/Account";
+import {AccountRole} from "../entities/AccountRole";
+import { PendingAccountVerification } from "../entities/PendingAccountVerification";
+import {DuplicateEntry} from "../exceptions/DuplicateEntry";
+import {EntryNotFound} from "../exceptions/EntryNotFound";
 import {ConnectionManager, DeleteResult, getConnectionManager, getManager, getRepository} from "typeorm";
 
 @Service()

@@ -1,8 +1,8 @@
 import {BodyParams, Controller, PlatformResponse, Post, Res} from "@tsed/common";
 import {ContentType, Groups, Put, Returns, Status, Summary} from "@tsed/schema";
-import {Account} from "src/entities/Account";
-import { ForgotPasswordModel, ResendVerificationEmailModel, SignUpResponse, UpdatePasswordModel, VerificationData, VerifyOtpModel } from "src/models/Auth";
-import { CustomError } from "src/models/CustomError";
+import {Account} from "../entities/Account";
+import { ForgotPasswordModel, ResendVerificationEmailModel, SignUpResponse, UpdatePasswordModel, VerificationData, VerifyOtpModel } from "../models/Auth";
+import { CustomError } from "../models/CustomError";
 import {AuthService} from "../services/Auth";
 
 interface LoginFields {

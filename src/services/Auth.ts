@@ -1,15 +1,15 @@
-import { Account } from "src/entities/Account";
-import { AccountRole } from "src/entities/AccountRole";
+import { Account } from "../entities/Account";
+import { AccountRole } from "../entities/AccountRole";
 import { AccountService } from "./Account";
 import { BadRequest, Exception, NotFound, Unauthorized } from "@tsed/exceptions";
 import { ConnectionManager, getConnectionManager, getManager, getRepository } from "typeorm";
-import { EntryNotFound } from "src/exceptions/EntryNotFound";
-import { ForgotPasswordModel, ResendVerificationEmailModel, SignedAuthenticationJWTData, SignUpResponse, UpdatePasswordModel, VerificationData, VerifyOtpModel } from "src/models/Auth";
-import { ForgottenPasswordOtpHash } from "src/entities/ForgottenPasswordOtpHash";
+import { EntryNotFound } from "../exceptions/EntryNotFound";
+import { ForgotPasswordModel, ResendVerificationEmailModel, SignedAuthenticationJWTData, SignUpResponse, UpdatePasswordModel, VerificationData, VerifyOtpModel } from "../models/Auth";
+import { ForgottenPasswordOtpHash } from "../entities/ForgottenPasswordOtpHash";
 import { hotp } from 'otplib';
-import { PendingAccountVerification } from "src/entities/PendingAccountVerification";
+import { PendingAccountVerification } from "../entities/PendingAccountVerification";
 import { PlatformResponse, Service } from "@tsed/common";
-import { sendEmail } from "src/utils/Mailer";
+import { sendEmail } from "../utils/Mailer";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 

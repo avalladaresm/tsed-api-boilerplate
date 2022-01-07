@@ -1,8 +1,8 @@
 import {BodyParams, Controller, Delete, Get, PathParams, Post, Put} from "@tsed/common";
 import {Groups, Returns, Status, Summary} from "@tsed/schema";
-import {Role} from "src/entities/Role";
-import {CustomError} from "src/models/CustomError";
-import {RoleService} from "src/services/Role";
+import {Role} from "../entities/Role";
+import {CustomError} from "../models/CustomError";
+import {RoleService} from "../services/Role";
 import {DeleteResult, InsertResult} from "typeorm";
 
 @Controller("/")

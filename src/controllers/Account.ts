@@ -1,9 +1,9 @@
 import {BodyParams, Controller, Delete, Get, PathParams, PlatformResponse, Post, Put, QueryParams, Res} from "@tsed/common";
 import {Groups, Returns, Status, Summary} from "@tsed/schema";
-import {Account} from "src/entities/Account";
-import { SignUpResponse } from "src/models/Auth";
-import {CustomError} from "src/models/CustomError";
-import {AccountService} from "src/services/Account";
+import {Account} from "../entities/Account";
+import { SignUpResponse } from "../models/Auth";
+import {CustomError} from "../models/CustomError";
+import {AccountService} from "../services/Account";
 import {DeleteResult} from "typeorm";
 
 @Controller("/")

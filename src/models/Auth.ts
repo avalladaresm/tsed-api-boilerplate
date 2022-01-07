@@ -1,5 +1,5 @@
 import { Property, Schema } from "@tsed/schema";
-import { Account } from "src/entities/Account";
+import { Account } from "../entities/Account";
 import jwt from "jsonwebtoken";
 
 

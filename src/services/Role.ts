@@ -1,6 +1,6 @@
 import {Service} from "@tsed/common";
 import {TypeORMService} from "@tsed/typeorm";
-import {Role} from "src/entities/Role";
+import {Role} from "../entities/Role";
 import {ConnectionManager, DeleteResult, getConnectionManager, getManager, InsertResult} from "typeorm";
 
 @Service()

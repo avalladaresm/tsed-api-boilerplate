@@ -1,19 +1,19 @@
 import {PlatformResponse, Service} from "@tsed/common";
 import { BadRequest, Conflict, Exception, NotFound } from "@tsed/exceptions";
 import {TypeORMService} from "@tsed/typeorm";
-import {MSSQL_DUP_ENTRY_ERROR_NUMBER, MSSQL_MALFORMED_GUID_ERROR_NUMBER} from "src/constants/mssql_errors";
-import {Account} from "src/entities/Account";
-import {AccountRole} from "src/entities/AccountRole";
-import {DuplicateEntry} from "src/exceptions/DuplicateEntry";
-import {EntryNotFound} from "src/exceptions/EntryNotFound";
+import {MSSQL_DUP_ENTRY_ERROR_NUMBER, MSSQL_MALFORMED_GUID_ERROR_NUMBER} from "../constants/mssql_errors";
+import {Account} from "../entities/Account";
+import {AccountRole} from "../entities/AccountRole";
+import {DuplicateEntry} from "../exceptions/DuplicateEntry";
+import {EntryNotFound} from "../exceptions/EntryNotFound";
 import {ConnectionManager, DeleteResult, getConnectionManager, getManager, getRepository} from "typeorm";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { PendingAccountVerificationService } from "./PendingAccountVerification";
-import { PendingAccountVerification } from "src/entities/PendingAccountVerification";
-import { SignUpResponse } from "src/models/Auth";
-import { MalformedGuid } from "src/exceptions/MalformedGuid";
-import { sendEmail } from "src/utils/Mailer";
+import { PendingAccountVerification } from "../entities/PendingAccountVerification";
+import { SignUpResponse } from "../models/Auth";
+import { MalformedGuid } from "../exceptions/MalformedGuid";
+import { sendEmail } from "../utils/Mailer";
 
 @Service()
 export class AccountService {
