@@ -1,7 +1,7 @@
-import {BodyParams, Controller, PlatformResponse, Post, Res} from "@tsed/common";
-import {ContentType, Groups, Put, Returns, Status, Summary} from "@tsed/schema";
+import {BodyParams, Controller, PlatformResponse, Post, QueryParams, Res} from "@tsed/common";
+import {ContentType, Get, Groups, Put, Returns, Status, Summary} from "@tsed/schema";
 import {Account} from "../entities/Account";
-import { ForgotPasswordModel, ResendVerificationEmailModel, SignUpResponse, UpdatePasswordModel, VerificationData, VerifyOtpModel } from "../models/Auth";
+import { ForgotPasswordModel, ResendVerificationEmailModel, SignUpResponse, UpdatePasswordModel, VerifyOtpModel } from "../models/Auth";
 import { CustomError } from "../models/CustomError";
 import {AuthService} from "../services/Auth";
 
@@ -40,13 +40,14 @@ export class AuthController {
     }
   }
 
-  @Post('/verify')
+  @Get('/verify')
   async verify(
-    @BodyParams() verificationData: VerificationData,
+    @QueryParams('id') accountId: string,
+    @QueryParams('accessToken') accessToken: string,
     @Res () res: PlatformResponse
   ): Promise<boolean> {
     try {
-      const result = await this.authService.verify(verificationData, res)
+      const result = await this.authService.verify(accountId, accessToken, res)
       return result
     }
     catch (e) {
