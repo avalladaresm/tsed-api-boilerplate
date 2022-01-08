@@ -1,6 +1,6 @@
 import { join } from "path";
 import { loggerConfig } from "./logger";
-import typeormConfig from "../../ormconfig";
+import typeormConfig from "../ormconfig";
 import { ConnectionOptions } from "typeorm";
 
 export const rootDir = join(__dirname, "..");
