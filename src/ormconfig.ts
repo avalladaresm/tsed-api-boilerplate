@@ -1,4 +1,5 @@
-import { CustomNamingStrategy } from "./src/CustomNamingStrategy";
+import { join } from "path";
+import { CustomNamingStrategy } from "./CustomNamingStrategy";
 
 export default {
 	name: "default",
@@ -11,9 +12,9 @@ export default {
 	synchronize: process.env.API_TYPEORM_SYNCHRONIZE,
 	logging: process.env.API_TYPEORM_LOGGING,
 	logger: process.env.API_TYPEORM_LOGGER,
-	entities: [process.env.API_TYPEORM_ENTITIES],
-	migrations: [process.env.API_TYPEORM_MIGRATIONS],
-	seeds: [process.env.API_TYPEORM_SEEDS],
+	entities: process.env.NODE_ENV !== "production" ? [join(__dirname, process.env.DEV_API_TYPEORM_ENTITIES!)] : [join(__dirname, process.env.API_TYPEORM_ENTITIES!)],
+	migrations: process.env.NODE_ENV !== "production" ? [join(__dirname, process.env.DEV_API_TYPEORM_MIGRATIONS!)] : [join(__dirname, process.env.API_TYPEORM_MIGRATIONS!)],
+	seeds: process.env.NODE_ENV !== "production" ? [join(__dirname, process.env.DEV_API_TYPEORM_SEEDS!)] : [join(__dirname, process.env.API_TYPEORM_SEEDS!)],
 	cli: {
 		entitiesDir: process.env.API_TYPEORM_ENTITIES_DIR,
 		migrationsDir: process.env.API_TYPEORM_MIGRATIONS_DIR

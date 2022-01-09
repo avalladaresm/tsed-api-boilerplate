@@ -6,7 +6,7 @@
 		"build": "npx tsc --project tsconfig.compile.json",
 		"build:w": "tsc --project tsconfig.compile.json -w",
 		"start": "tsnd --inspect --ignore-watch node_modules --respawn --transpile-only -r tsconfig-paths/register src/index.ts",
-		"start:prod": "cross-env NODE_ENV=production node dist/src/index.js",
+		"start:prod": "cross-env NODE_ENV=production node dist/index.js",
 		"test": "npm run test:lint && npm run test:coverage",
 		"test:unit": "cross-env NODE_ENV=test jest",
 		"test:coverage": "npm run test:unit",
@@ -16,7 +16,7 @@
 		"seed:config": "ts-node ./node_modules/typeorm-seeding/dist/cli.js config",
 		"seed:run": "ts-node ./node_modules/typeorm-seeding/dist/cli.js seed",
 		"typeorm": "tsed typeorm",
-		"typeorm:runmig": "ts-node --transpile-only ./node_modules/typeorm/cli.js"
+		"typeorm:runmig": "ts-node --transpile-only ./node_modules/typeorm/cli.js --config ./src/ormconfig.ts"
 	},
 	"dependencies": {
 		"@tsed/ajv": "^7.0.0-beta.3",
