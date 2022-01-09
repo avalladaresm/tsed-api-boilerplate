@@ -2,6 +2,8 @@ import {Service} from "@tsed/common";
 import {TypeORMService} from "@tsed/typeorm";
 import {SecurityQuestion} from "../entities/SecurityQuestion";
 import {ConnectionManager, DeleteResult, getConnectionManager, getManager, InsertResult} from "typeorm";
+import { DuplicateEntry } from "src/exceptions/DuplicateEntry";
+import { MSSQL_DUP_ENTRY_ERROR_NUMBER } from "src/constants/mssql_errors";
 
 @Service()
 export class SecurityQuestionService {
@@ -27,6 +29,9 @@ export class SecurityQuestionService {
       const securityQuestion = await this.entityManager.insert(SecurityQuestion, data);
       return securityQuestion;
     } catch (e) {
+      if (e?.number === MSSQL_DUP_ENTRY_ERROR_NUMBER) {
+        throw new DuplicateEntry();
+      }
       throw e;
     }
   }

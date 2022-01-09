@@ -5,11 +5,15 @@ import { SecurityQuestion } from "./SecurityQuestion";
 
 @Entity({name: "AccountSecurityQuestion"})
 @Groups<AccountSecurityQuestion>({
+  create: [
+    "accountId",
+    "securityQuestionId",
+  ],
   read: [
     "id",
     "idInc",
     "accountId",
-    "securityQuestion",
+    "securityQuestionId",
     "createdAt",
     "updatedAt"
   ]
@@ -24,19 +28,18 @@ export class AccountSecurityQuestion {
   @Column("int", {generated: "increment"})
   idInc: number;
 
-  @PrimaryColumn()
-  accountId: number;
-
   @Property()
+  @PrimaryColumn()
+  accountId: string;
+
   @OneToOne(() => Account, (account) => account.accountSecurityQuestion, {onDelete: "CASCADE"})
   @JoinColumn({name: "accountId", referencedColumnName: "id"})
   account: Account;
 
-  @PrimaryColumn()
   @Property()
+  @PrimaryColumn()
   securityQuestionId: string;
 
-  @Property()
   @OneToOne(() => SecurityQuestion, {eager: true, onDelete: "CASCADE", onUpdate: "CASCADE"})
   @JoinColumn({name: "securityQuestionId", referencedColumnName: "id"})
   securityQuestion: SecurityQuestion;

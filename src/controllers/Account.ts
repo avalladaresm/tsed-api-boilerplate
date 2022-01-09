@@ -5,6 +5,7 @@ import { SignUpResponse } from "../models/Auth";
 import {CustomError} from "../models/CustomError";
 import {AccountService} from "../services/Account";
 import {DeleteResult} from "typeorm";
+import { AccountSecurityQuestion } from "src/entities/AccountSecurityQuestion";
 
 @Controller("/")
 export class AccountController {
@@ -83,6 +84,18 @@ export class AccountController {
   async deleteAccount(@PathParams("id") id: string): Promise<DeleteResult> {
     try {
       const account = await this.accountService.deleteAccount(id);
+      return account;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  @Get("/account/securityQuestion/:accountId")
+  @Summary("Gets an account by id")
+  @(Returns(200, AccountSecurityQuestion).Groups("read").Description("Returns an account security question"))
+  async getAccountSecurityQuestion(@PathParams("accountId") accountId: string): Promise<AccountSecurityQuestion | undefined> {
+    try {
+      const account = await this.accountService.getAccountSecurityQuestion(accountId);
       return account;
     } catch (e) {
       throw e;

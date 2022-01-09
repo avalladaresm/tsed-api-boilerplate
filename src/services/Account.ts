@@ -14,6 +14,7 @@ import { PendingAccountVerification } from "../entities/PendingAccountVerificati
 import { SignUpResponse } from "../models/Auth";
 import { MalformedGuid } from "../exceptions/MalformedGuid";
 import { sendEmail } from "../utils/Mailer";
+import { AccountSecurityQuestion } from "src/entities/AccountSecurityQuestion";
 
 @Service()
 export class AccountService {
@@ -25,6 +26,7 @@ export class AccountService {
   private entityManager = getManager();
   private accountRepository = getRepository(Account);
   private accountRoleRepository = getRepository(AccountRole);
+  private accountSecurityQuestionRepository = getRepository(AccountSecurityQuestion);
 
   $afterRoutesInit(): void {
     this.connection = getConnectionManager();
@@ -243,6 +245,25 @@ export class AccountService {
 
       return account;
     } catch (e) {
+      throw e;
+    }
+  }
+
+  async getAccountSecurityQuestion(accountId: string): Promise<AccountSecurityQuestion | undefined> {
+    try {
+      const account = await this.accountSecurityQuestionRepository.createQueryBuilder("accountSecurityQuestion")
+        .innerJoinAndSelect("accountSecurityQuestion.account", "account")
+        .where("accountSecurityQuestion.accountId = :accountId")
+        .setParameter("accountId", accountId)
+        .getOne();
+      return account;
+    } catch (e) {
+      if (e?.number === MSSQL_DUP_ENTRY_ERROR_NUMBER) {
+        throw new DuplicateEntry(e?.message);
+      }
+      else if (e?.number === MSSQL_MALFORMED_GUID_ERROR_NUMBER) {
+        throw new MalformedGuid();
+      }
       throw e;
     }
   }

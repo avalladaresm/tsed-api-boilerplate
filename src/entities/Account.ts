@@ -93,7 +93,7 @@ export class Account {
   @OneToOne(() => ForgottenPasswordOtpHash)
   forgottenPasswordOtpHash: ForgottenPasswordOtpHash;
 
-  @OneToOne(() => AccountSecurityQuestion)
+  @OneToOne(() => AccountSecurityQuestion, (accountSecurityQuestion) => accountSecurityQuestion.account)
   accountSecurityQuestion: AccountSecurityQuestion;
 
   @Property()
