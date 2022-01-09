@@ -1,11 +1,5 @@
+import { join } from "path";
 import { CustomNamingStrategy } from "./CustomNamingStrategy";
-import * as entities  from "./entities"
-import * as migrations  from "./migrations"
-import * as seeds  from "./seeds"
-import {join} from "path";
-const rootDir = __dirname
-
-const toRootDir = (path: any) => join(rootDir, String(path))
 
 export default {
 	name: "default",
@@ -18,12 +12,12 @@ export default {
 	synchronize: process.env.API_TYPEORM_SYNCHRONIZE,
 	logging: process.env.API_TYPEORM_LOGGING,
 	logger: process.env.API_TYPEORM_LOGGER,
-	entities: [...Object.values(entities)],
-	migrations: [...Object.values(migrations)],
-	seeds: [...Object.values(seeds)],
+	entities: process.env.NODE_ENV !== "production" ? [join(__dirname, process.env.DEV_API_TYPEORM_ENTITIES!)] : [join(__dirname, process.env.API_TYPEORM_ENTITIES!)],
+	migrations: process.env.NODE_ENV !== "production" ? [join(__dirname, process.env.DEV_API_TYPEORM_MIGRATIONS!)] : [join(__dirname, process.env.API_TYPEORM_MIGRATIONS!)],
+	seeds: process.env.NODE_ENV !== "production" ? [join(__dirname, process.env.DEV_API_TYPEORM_SEEDS!)] : [join(__dirname, process.env.API_TYPEORM_SEEDS!)],
 	cli: {
-		entitiesDir: toRootDir(process.env.API_TYPEORM_ENTITIES_DIR),
-		migrationsDir: toRootDir(process.env.API_TYPEORM_MIGRATIONS_DIR)
+		entitiesDir: process.env.API_TYPEORM_ENTITIES_DIR,
+		migrationsDir: process.env.API_TYPEORM_MIGRATIONS_DIR
 	},
 	namingStrategy: new CustomNamingStrategy(),
 	options: {

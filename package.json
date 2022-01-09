@@ -3,10 +3,7 @@
 	"version": "0.0.1",
 	"description": "",
 	"scripts": {
-		"build": "npm run barrels:entities && npm run barrels:migrations && npm run barrels:seeds && npx tsc --project tsconfig.compile.json && npm run copy_assets",
-		"barrels:entities": "npx barrelsby --delete -d ./src/entities -e .spec.ts -e .fixture.ts",
-		"barrels:migrations": "npx barrelsby --delete -d ./src/migrations -e .spec.ts -e .fixture.ts",
-		"barrels:seeds": "npx barrelsby --delete -d ./src/seeds -e .spec.ts -e .fixture.ts",
+		"build": "npx tsc --project tsconfig.compile.json && npm run copy_assets",
 		"build:w": "tsc --project tsconfig.compile.json -w",
 		"start": "tsnd --inspect --ignore-watch node_modules --respawn --transpile-only -r tsconfig-paths/register src/index.ts",
 		"start:prod": "cross-env NODE_ENV=production node dist/index.js",
@@ -19,7 +16,7 @@
 		"seed:config": "ts-node ./node_modules/typeorm-seeding/dist/cli.js config",
 		"seed:run": "ts-node ./node_modules/typeorm-seeding/dist/cli.js seed",
 		"typeorm": "tsed typeorm",
-		"typeorm:runmig": "ts-node --transpile-only ./node_modules/typeorm/cli.js --config ./src/config/ormconfig.ts",
+		"typeorm:runmig": "ts-node --transpile-only ./node_modules/typeorm/cli.js --config ./src/ormconfig.ts"
 		"copy_assets": "cp -r ./src/views dist && cp -r ./src/public dist"
 	},
 	"dependencies": {
@@ -35,7 +32,6 @@
 		"@tsed/swagger": "^7.0.0-beta.3",
 		"@tsed/typeorm": "^7.0.0-beta.3",
 		"ajv": "^8.8.2",
-		"barrelsby": "^2.3.1",
 		"bcrypt": "^5.0.1",
 		"body-parser": "^1.19.1",
 		"compression": "^1.7.4",

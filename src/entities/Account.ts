@@ -6,6 +6,7 @@ import {AccountRole} from "./AccountRole";
 import { PendingAccountVerification } from "./PendingAccountVerification";
 import { ForgottenPasswordOtpHash } from "./ForgottenPasswordOtpHash";
 import { AuthLog } from "./AuthLog";
+import { AccountSecurityQuestion } from "./AccountSecurityQuestion";
 
 @BeforeDeserialize((data: Record<string, unknown>) => {
   if (!data.name) {
@@ -91,6 +92,9 @@ export class Account {
 
   @OneToOne(() => ForgottenPasswordOtpHash)
   forgottenPasswordOtpHash: ForgottenPasswordOtpHash;
+
+  @OneToOne(() => AccountSecurityQuestion)
+  accountSecurityQuestion: AccountSecurityQuestion;
 
   @Property()
   @Example("Daryl Schultz")
