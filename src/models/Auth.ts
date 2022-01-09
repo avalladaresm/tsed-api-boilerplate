@@ -1,7 +1,16 @@
 import { Property, Schema } from "@tsed/schema";
 import { Account } from "../entities/Account";
 import jwt from "jsonwebtoken";
+import { AccountRole } from "../entities/AccountRole";
 
+@Schema({})
+export class SignInModel {
+  @Property()
+  email: string;
+
+  @Property()
+  password: string;
+}
 
 class OnlyEmailModel {
   @Property()
@@ -69,5 +78,17 @@ export class UpdatePasswordModel {
 
   @Property()
   newPassword: string;
+}
+
+@Schema({})
+export class SignInResult {
+  @Property()
+  at: string;
+
+  @Property()
+  r: AccountRole | AccountRole[];
+
+  @Property()
+  uid: string;
 }
 

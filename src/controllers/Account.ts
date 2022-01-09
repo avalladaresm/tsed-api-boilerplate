@@ -5,7 +5,7 @@ import { SignUpResponse } from "../models/Auth";
 import {CustomError} from "../models/CustomError";
 import {AccountService} from "../services/Account";
 import {DeleteResult} from "typeorm";
-import { AccountSecurityQuestion } from "src/entities/AccountSecurityQuestion";
+import { AccountSecurityQuestion } from "../entities/AccountSecurityQuestion";
 
 @Controller("/")
 export class AccountController {

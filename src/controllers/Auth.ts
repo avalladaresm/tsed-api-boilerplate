@@ -1,14 +1,12 @@
-import {BodyParams, Controller, PlatformResponse, Post, QueryParams, Res} from "@tsed/common";
+import {BodyParams, Controller, PlatformRequest, PlatformResponse, Post, QueryParams, Req, Res} from "@tsed/common";
 import {ContentType, Get, Groups, Put, Returns, Status, Summary} from "@tsed/schema";
 import {Account} from "../entities/Account";
-import { ForgotPasswordModel, ResendVerificationEmailModel, SignUpResponse, UpdatePasswordModel, VerifyOtpModel } from "../models/Auth";
+import { ForgotPasswordModel, ResendVerificationEmailModel, SignInModel, SignInResult, SignUpResponse, UpdatePasswordModel, VerifyOtpModel } from "../models/Auth";
 import { CustomError } from "../models/CustomError";
 import {AuthService} from "../services/Auth";
+import parser from "ua-parser-js";
+import { PlatformModel } from "../models/Platform";
 
-interface LoginFields {
-  email: string;
-  password: string;
-}
 
 @Controller("/auth")
 export class AuthController {
@@ -17,9 +15,10 @@ export class AuthController {
   @Post("/signin")
   @Summary("Signs in an account")
   @ContentType("application/json")
-  async login(@BodyParams("data") data: LoginFields): Promise<any> {
+  async login(@BodyParams() data: SignInModel, @Req() req: PlatformRequest): Promise<SignInResult> {
     try {
-      const res = await this.authService.signin(data);
+      const platform: PlatformModel = {userAgent: parser(req.headers["user-agent"]), ip: req.headers["X-Forwarded-For"]?.toString() ?? ""}
+      const res = await this.authService.signin(data, platform);
       return res;
     } catch (e) {
       throw e;

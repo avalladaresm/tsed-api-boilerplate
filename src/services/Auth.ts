@@ -1,28 +1,19 @@
-import { Account } from "../entities/Account";
-import { AccountRole } from "../entities/AccountRole";
-import { AccountService } from "./Account";
-import { BadRequest, Exception, NotFound, Unauthorized } from "@tsed/exceptions";
-import { ConnectionManager, getConnectionManager, getManager, getRepository } from "typeorm";
-import { EntryNotFound } from "../exceptions/EntryNotFound";
-import { ForgotPasswordModel, ResendVerificationEmailModel, SignedAuthenticationJWTData, SignUpResponse, UpdatePasswordModel, VerifyOtpModel } from "../models/Auth";
-import { ForgottenPasswordOtpHash } from "../entities/ForgottenPasswordOtpHash";
-import { hotp } from 'otplib';
-import { PendingAccountVerification } from "../entities/PendingAccountVerification";
 import { PlatformResponse, Service } from "@tsed/common";
-import { sendEmail } from "../utils/Mailer";
+import { BadRequest, Exception, NotFound, Unauthorized } from "@tsed/exceptions";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-
-interface LoggedInUserCookieData {
-  at: string;
-  r: AccountRole | AccountRole[];
-  uid: string;
-}
-
-interface LoginFields {
-  email: string;
-  password: string;
-}
+import { hotp } from 'otplib';
+import { AccountActivity } from "../entities/AccountActivity";
+import { PlatformModel } from "../models/Platform";
+import { ConnectionManager, getConnectionManager, getManager, getRepository } from "typeorm";
+import { Account } from "../entities/Account";
+import { AccountRole } from "../entities/AccountRole";
+import { ForgottenPasswordOtpHash } from "../entities/ForgottenPasswordOtpHash";
+import { PendingAccountVerification } from "../entities/PendingAccountVerification";
+import { EntryNotFound } from "../exceptions/EntryNotFound";
+import { ForgotPasswordModel, ResendVerificationEmailModel, SignedAuthenticationJWTData, SignInModel, SignInResult, SignUpResponse, UpdatePasswordModel, VerifyOtpModel } from "../models/Auth";
+import { sendEmail } from "../utils/Mailer";
+import { AccountService } from "./Account";
 
 @Service()
 export class AuthService {
@@ -37,51 +28,70 @@ export class AuthService {
     this.connection = getConnectionManager();
   }
 
-  async signin(data: LoginFields): Promise<LoggedInUserCookieData> {
+  async signin(data: SignInModel, platform: PlatformModel): Promise<SignInResult> {
     try {
       let error: Exception = {} as Exception;
-      const account = await this.accountService.getAccountByEmail(data.email);
-      if (!account) {
-        error = new NotFound('Cuenta no encontrada')
-        error.errors = [{ code: 'E0001' }]
-        throw (error)
-      }
-      if (!bcrypt.compareSync(data.password, account.password)) {
-        error = new Unauthorized('Usuario o clave incorrecta.')
-        error.errors = [{ code: 'E0002', message: 'Usuario o clave incorrecta.' }]
-        throw (error)
-      }
-      if (!account?.isActive) {
-        error = new Unauthorized('Esta cuenta no está activa!')
-        error.errors = [{ code: 'E0003', message: 'Esta cuenta no está activa!' }]
-        throw (error)
-      }
-      if (!account?.isVerified) {
-        error = new Unauthorized('Esta cuenta no ha sido verificada!')
-        error.errors = [{ code: 'E0004', message: 'Esta cuenta no ha sido verificada!' }]
-        throw (error)
-      }
-      
-      const accountRoles = await this.accountService.getAccountRoles(account.id);
-      if (!accountRoles) {
-        error = new Unauthorized('No se encontraron roles para esta cuenta!')
-        error.errors = [{ code: 'E0005', message: 'No se encontraron roles para esta cuenta!' }]
-        throw (error)
-      }
+      const { email, password } = data;
+      const loginRes = await getManager().transaction(async (transactionalEntityManager) => {
+        const account = await transactionalEntityManager.createQueryBuilder(Account, "account")
+        .where("account.email = :email")
+        .setParameter("email", email)
+        .getOne();
+        if (!account) {
+          error = new NotFound('Cuenta no encontrada')
+          error.errors = [{ code: 'E0001' }]
+          throw (error)
+        }
+        if (!bcrypt.compareSync(password, account.password)) {
+          error = new Unauthorized('Usuario o clave incorrecta.')
+          error.errors = [{ code: 'E0002', message: 'Usuario o clave incorrecta.' }]
+          throw (error)
+        }
+        if (!account?.isActive) {
+          error = new Unauthorized('Esta cuenta no está activa!')
+          error.errors = [{ code: 'E0003', message: 'Esta cuenta no está activa!' }]
+          throw (error)
+        }
+        if (!account?.isVerified) {
+          error = new Unauthorized('Esta cuenta no ha sido verificada!')
+          error.errors = [{ code: 'E0004', message: 'Esta cuenta no ha sido verificada!' }]
+          throw (error)
+        }
+        
+        const accountRoles = await transactionalEntityManager.createQueryBuilder(AccountRole, "accountRole")
+        .where("accountRole.accountId = :accountId")
+        .select(["accountRole.roleName"])
+        .setParameter("accountId", account.id)
+        .getMany();
+        if (!accountRoles) {
+          error = new Unauthorized('No se encontraron roles para esta cuenta!')
+          error.errors = [{ code: 'E0005', message: 'No se encontraron roles para esta cuenta!' }]
+          throw (error)
+        }
 
-      const signedData = { userId: account.id, role: accountRoles[0].roleName, email: data.email };
+        const signedData = { userId: account.id, role: accountRoles[0].roleName, email: data.email };
 
-      if (!process.env.JWT_SECRET) {
-        error = new BadRequest('No se pudo determinar las credenciale!')
-        error.errors = [{ code: 'E0006', message: 'No se pudo determinar las credenciale!' }]
-        throw (error)
-      }
-      const token = jwt.sign({ signedData }, process.env.JWT_SECRET, {
-        expiresIn: Number(process.env.JWT_EXPIRESIN_LOGIN),
-        algorithm: "HS512"
-      });
+        if (!process.env.JWT_SECRET) {
+          error = new BadRequest('No se pudo determinar las credenciale!')
+          error.errors = [{ code: 'E0006', message: 'No se pudo determinar las credenciale!' }]
+          throw (error)
+        }
+        const token = jwt.sign({ signedData }, process.env.JWT_SECRET, {
+          expiresIn: Number(process.env.JWT_EXPIRESIN_LOGIN),
+          algorithm: "HS512"
+        });
 
-      const loginRes: LoggedInUserCookieData = { at: token, r: accountRoles, uid: account.id }
+        await transactionalEntityManager.insert(AccountActivity, { 
+          activityType: "sign_in",
+          username: account.username,
+          ip: platform.ip,
+          browserName: platform.userAgent.browser.name,
+          browserVersion: platform.userAgent.browser.version,
+          osPlatform: platform.userAgent.os.name + " " + platform.userAgent.os.version,
+        });
+
+        return { at: token, r: accountRoles, uid: account.id }
+      })
       return loginRes
     } catch (e) {
       throw e;

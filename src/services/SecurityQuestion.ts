@@ -2,8 +2,8 @@ import {Service} from "@tsed/common";
 import {TypeORMService} from "@tsed/typeorm";
 import {SecurityQuestion} from "../entities/SecurityQuestion";
 import {ConnectionManager, DeleteResult, getConnectionManager, getManager, InsertResult} from "typeorm";
-import { DuplicateEntry } from "src/exceptions/DuplicateEntry";
-import { MSSQL_DUP_ENTRY_ERROR_NUMBER } from "src/constants/mssql_errors";
+import { DuplicateEntry } from "../exceptions/DuplicateEntry";
+import { MSSQL_DUP_ENTRY_ERROR_NUMBER } from "../constants/mssql_errors";
 
 @Service()
 export class SecurityQuestionService {

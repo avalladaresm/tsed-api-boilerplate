@@ -1,9 +1,10 @@
-import {Example, Groups, Property} from "@tsed/schema";
+import {Example, Groups, Property, Required} from "@tsed/schema";
 import {Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryColumn, Unique, UpdateDateColumn} from "typeorm";
 import {BeforeDeserialize} from "@tsed/json-mapper";
 import {ValidationError} from "@tsed/common";
 import { Account } from "./Account";
 import { Activity } from "./Activity";
+import { ActivityType } from "../models/Activity";
 
 @BeforeDeserialize((data: Record<string, unknown>) => {
   if (!data.otpHash) {
@@ -49,7 +50,8 @@ export class AccountActivity {
   @Column("int", {generated: "increment"})
   idInc?: number;
 
-  @Column()
+  @Column("varchar", { length: 255, nullable: false })
+  @Required()
   @Property()
   username: string;
 
@@ -60,7 +62,7 @@ export class AccountActivity {
   @PrimaryColumn()
   @Example("sign_in")
   @Property()
-  activityType: string;
+  activityType: ActivityType;
 
   @ManyToOne(() => Activity, {eager: true, onDelete: "CASCADE", onUpdate: "CASCADE"})
   @JoinColumn({name: "activityType", referencedColumnName: "activityType"})

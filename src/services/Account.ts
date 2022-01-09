@@ -14,7 +14,7 @@ import { PendingAccountVerification } from "../entities/PendingAccountVerificati
 import { SignUpResponse } from "../models/Auth";
 import { MalformedGuid } from "../exceptions/MalformedGuid";
 import { sendEmail } from "../utils/Mailer";
-import { AccountSecurityQuestion } from "src/entities/AccountSecurityQuestion";
+import { AccountSecurityQuestion } from "../entities/AccountSecurityQuestion";
 
 @Service()
 export class AccountService {
@@ -161,7 +161,6 @@ export class AccountService {
 
   async getAccountByEmail(email: string): Promise<Account | undefined> {
     try {
-      console.log("em", email)
       const account = await this.accountRepository.createQueryBuilder("account")
         .where("account.email = :email", { email: email })
         .getOne();
