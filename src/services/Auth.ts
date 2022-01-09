@@ -107,7 +107,7 @@ export class AuthService {
     }
   }
 
-  async verify(verificationData: VerificationData, res: PlatformResponse): Promise<boolean> {
+  async verify(accountId: string, accessToken: string, res: PlatformResponse): Promise<boolean> {
     try {
       let error: Exception = {} as Exception;
       const { accountId, accessToken } = verificationData;
@@ -123,8 +123,7 @@ export class AuthService {
         }
         if(account.isVerified){
           const alreadyVerifiedView = await res.render('alreadyVerified');
-          console.log('Showing alreadyVerified template because account.isVerified');
-          return false
+          return alreadyVerifiedView
         } else {
 
           const pendingAccountVerification = await transactionalEntityManager.createQueryBuilder(PendingAccountVerification, "pendingAccountVerification")
@@ -134,16 +133,14 @@ export class AuthService {
 
           if (!pendingAccountVerification) {
             const verificationExpired = await res.render('verificationExpired');
-            console.log('Showing verificationExpired template because !pendingAccountVerification');
-            return false
+            return verificationExpired
           }
 
           const dateNow = new Date().getTime().valueOf()
           const expiresAt = new Date(pendingAccountVerification.exp).getTime().valueOf()
           if (dateNow > expiresAt) {
             const verificationExpired = await res.render('verificationExpired');
-            console.log('Showing verificationExpired template because dateNow > expiresAt');
-            return false
+            return verificationExpired
           }
           if (!process.env.JWT_SECRET) {
             error = new BadRequest('No se pudo determinar las credenciale!')
@@ -163,15 +160,13 @@ export class AuthService {
               .where("pendingAccountVerification.accountId = :id")
               .setParameter("id", accountId)
               .execute();
-            console.log('deletePendingAccountVerificationResult', deletePendingAccountVerificationResult)
             const verificationSuccessful = await res.render('verificationSuccessful');
             console.log('Showing verificationSuccessful template');
-            return false
+            return verificationSuccessful
           }
           else {
             const verificationExpired = await res.render('verificationExpired');
-            console.log('Showing verificationExpired template because !accountId === decoded.signedData.userId && accessToken === pendingAccountVerification.accessToken');
-            return false
+            return verificationExpired
           }
         }
       })
