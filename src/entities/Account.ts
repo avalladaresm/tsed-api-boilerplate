@@ -7,6 +7,7 @@ import { PendingAccountVerification } from "./PendingAccountVerification";
 import { ForgottenPasswordOtpHash } from "./ForgottenPasswordOtpHash";
 import { AuthLog } from "./AuthLog";
 import { AccountSecurityQuestion } from "./AccountSecurityQuestion";
+import { AccountActivity } from "./AccountActivity";
 
 @BeforeDeserialize((data: Record<string, unknown>) => {
   if (!data.name) {
@@ -86,6 +87,10 @@ export class Account {
   @Property()
   @OneToMany(() => AuthLog, (authLogs) => authLogs.account)
   authLogs: AuthLog[];
+
+  @Property()
+  @OneToMany(() => AccountActivity, (accountActivity) => accountActivity.account)
+  accountActivity: AccountActivity[];
 
   @OneToOne(() => PendingAccountVerification)
   pendingAccountVerification: PendingAccountVerification;
