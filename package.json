@@ -16,7 +16,7 @@
 		"seed:config": "ts-node ./node_modules/typeorm-seeding/dist/cli.js config",
 		"seed:run": "ts-node ./node_modules/typeorm-seeding/dist/cli.js seed",
 		"typeorm": "tsed typeorm",
-		"typeorm:runmig": "ts-node --transpile-only ./node_modules/typeorm/cli.js --config ./src/ormconfig.ts"
+		"typeorm:runmig": "ts-node --transpile-only ./node_modules/typeorm/cli.js --config ./src/ormconfig.ts",
 		"copy_assets": "cp -r ./src/views dist && cp -r ./src/public dist"
 	},
 	"dependencies": {
