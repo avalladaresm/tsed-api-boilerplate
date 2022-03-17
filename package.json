@@ -27,6 +27,7 @@
 		"@tsed/di": "^7.0.0-beta.3",
 		"@tsed/exceptions": "^7.0.0-beta.3",
 		"@tsed/json-mapper": "^7.0.0-beta.3",
+		"@tsed/logger": "^6.1.0",
 		"@tsed/platform-express": "^7.0.0-beta.3",
 		"@tsed/schema": "^7.0.0-beta.3",
 		"@tsed/socketio": "^7.0.0-beta.3",
