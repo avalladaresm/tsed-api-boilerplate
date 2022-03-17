@@ -86,7 +86,7 @@ export class SignInResult {
   at: string;
 
   @Property()
-  r: AccountRole | AccountRole[];
+  r: string[];
 
   @Property()
   uid: string;

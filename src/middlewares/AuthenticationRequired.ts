@@ -1,9 +1,11 @@
-import { IMiddleware, Middleware, Next, Req } from '@tsed/common';
+import { Next, Req } from '@tsed/common';
 import { BadRequest, Exception, Forbidden, Unauthorized } from '@tsed/exceptions';
+import { MiddlewareMethods, Middleware } from "@tsed/platform-middlewares";
+
 import jwt from "jsonwebtoken";
 
 @Middleware()
-export class AuthenticationRequired implements IMiddleware {
+export class AuthenticationRequired implements MiddlewareMethods {
   use(@Req() req: Req, @Next() next: Next) {
     let error: Exception = {} as Exception;
     const accessToken = req.headers.authorization?.split(' ')[1]

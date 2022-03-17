@@ -1,6 +1,6 @@
 import { Req } from "@tsed/common";
 import { Unauthorized } from "@tsed/exceptions";
-var jwt = require('jsonwebtoken');
+import jwt from "jsonwebtoken"
 
 export class AuthenticateUserType {
 
@@ -30,6 +30,7 @@ export class AuthenticateUserType {
     }
     const profile = await connection.query('CALL getUserProfileById(?)', [user.idUserProfile])
     const profileRes = profile[0][0]
+    if (!process.env.JWT_SECRET) return
     const token = jwt.sign({ profileRes }, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXPIRESIN,
     });

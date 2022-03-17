@@ -1,13 +1,12 @@
-import { IMiddleware, Middleware, Next, Req } from '@tsed/common';
-import { BadRequest, Forbidden, Unauthorized } from '@tsed/exceptions';
-import jwt from "jsonwebtoken";
+import { Next, Req } from '@tsed/common';
+import { Forbidden } from '@tsed/exceptions';
+import { MiddlewareMethods, Middleware } from "@tsed/platform-middlewares";
 
 @Middleware()
-export class AdminOnly implements IMiddleware {
+export class AdminOnly implements MiddlewareMethods {
   use(@Req() req: Req, @Next() next: Next) {
     if (req.app.locals.signedData?.dataToSign.userRoleId != 1) {
-      let error;
-      error = new Forbidden('No tienes acceso a esta página')
+      const error = new Forbidden('No tienes acceso a esta página')
       error.errors = [{ code: 'EACC001' }]
       throw (error)
     }

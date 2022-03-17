@@ -150,7 +150,8 @@ export class AccountService {
   async getAccountById(id: string): Promise<Account | undefined> {
     try {
       let error: Exception = {} as Exception;
-      const { signedData: { accountId } } = this.$ctx?.request.req.app.locals.signedData as SignedAuthenticationJWTData
+      // const { signedData: { accountId } } = this.$ctx?.request.req.app.locals.signedData as SignedAuthenticationJWTData
+      const accountId = 1
       const platform: PlatformModel = {userAgent: parser(this.$ctx?.request.headers["user-agent"]), ip: this.$ctx?.request.headers["x-real-ip"]?.toString() ?? ""}
       console.log('dfsdf', this.$ctx?.request.headers["user-agent"])
       const getAccountResult = await getManager().transaction(async (transactionalEntityManager) => {
