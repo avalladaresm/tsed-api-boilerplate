@@ -36,7 +36,7 @@ import { ActivityType } from "../models/Activity";
     "updatedAt"
   ]
 })
-@Entity({name: "AccountActivity"})
+@Entity({name: "AccountActivity", orderBy: { createdAt: "DESC" }})
 @Unique("UQ_AccountActivity_id", ["id"])
 @Unique("UQ_AccountActivity_idInc", ["idInc"])
 export class AccountActivity {
@@ -50,13 +50,22 @@ export class AccountActivity {
   @Column("int", {generated: "increment"})
   idInc?: number;
 
+  @Property()
+  @PrimaryColumn()
+  accountId: string;
+
   @Column("varchar", { length: 255, nullable: false })
   @Required()
   @Property()
   username: string;
 
+  @Column("varchar", { length: 255, nullable: true })
+  @Required()
+  @Property()
+  targetUsername: string;
+
   @ManyToOne(() => Account, { onDelete: "CASCADE" })
-  @JoinColumn({name: "username", referencedColumnName: "username"})
+  @JoinColumn({name: "accountId", referencedColumnName: "id"})
   account: Account;
 
   @PrimaryColumn()
@@ -70,22 +79,22 @@ export class AccountActivity {
 
   @Property()
   @Example("192.168.1.102")
-  @Column("varchar", { length: 255, nullable: false })
+  @Column("varchar", { length: 255, nullable: true })
   ip: string;
 
   @Property()
   @Example("Windows")
-  @Column("varchar", { length: 255, nullable: false })
+  @Column("varchar", { length: 255, nullable: true })
   osPlatform: string;
 
   @Property()
   @Example("Chrome")
-  @Column("varchar", { length: 255, nullable: false })
+  @Column("varchar", { length: 255, nullable: true })
   browserName: string;
 
   @Property()
   @Example("v90")
-  @Column("varchar", { length: 255, nullable: false })
+  @Column("varchar", { length: 255, nullable: true })
   browserVersion: string;
 
   @Property()

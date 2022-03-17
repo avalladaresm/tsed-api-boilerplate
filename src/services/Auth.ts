@@ -58,18 +58,18 @@ export class AuthService {
           throw (error)
         }
         
-        const accountRoles = await transactionalEntityManager.createQueryBuilder(AccountRole, "accountRole")
+        const accountRolesResult = await transactionalEntityManager.createQueryBuilder(AccountRole, "accountRole")
         .where("accountRole.accountId = :accountId")
         .select(["accountRole.roleName"])
         .setParameter("accountId", account.id)
         .getMany();
-        if (!accountRoles) {
+        if (!accountRolesResult) {
           error = new Unauthorized('No se encontraron roles para esta cuenta!')
           error.errors = [{ code: 'E0005', message: 'No se encontraron roles para esta cuenta!' }]
           throw (error)
         }
-
-        const signedData = { userId: account.id, role: accountRoles[0].roleName, email: data.email };
+        const accountRoles = accountRolesResult.map(ar => ar.roleName)
+        const signedData = { accountId: account.id, role: accountRoles, email: data.email };
 
         if (!process.env.JWT_SECRET) {
           error = new BadRequest('No se pudo determinar las credenciale!')
@@ -83,6 +83,7 @@ export class AuthService {
 
         await transactionalEntityManager.insert(AccountActivity, { 
           activityType: "sign_in",
+          accountId: account.id,
           username: account.username,
           ip: platform.ip,
           browserName: platform.userAgent.browser.name,

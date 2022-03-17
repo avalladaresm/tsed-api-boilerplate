@@ -17,7 +17,7 @@ export class AuthController {
   @ContentType("application/json")
   async login(@BodyParams() data: SignInModel, @Req() req: PlatformRequest): Promise<SignInResult> {
     try {
-      const platform: PlatformModel = {userAgent: parser(req.headers["user-agent"]), ip: req.headers["X-Forwarded-For"]?.toString() ?? ""}
+      const platform: PlatformModel = {userAgent: parser(req.headers["user-agent"]), ip: req.headers["x-real-ip"]?.toString() ?? ""}
       const res = await this.authService.signin(data, platform);
       return res;
     } catch (e) {

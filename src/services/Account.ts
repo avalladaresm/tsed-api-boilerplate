@@ -1,4 +1,5 @@
-import {PlatformResponse, Service} from "@tsed/common";
+import {Inject, Injectable, PlatformApplication, PlatformContext, PlatformRequest, PlatformResponse, Service} from "@tsed/common";
+import {InjectContext} from "@tsed/async-hook-context";
 import { BadRequest, Conflict, Exception, NotFound } from "@tsed/exceptions";
 import {TypeORMService} from "@tsed/typeorm";
 import {MSSQL_DUP_ENTRY_ERROR_NUMBER, MSSQL_MALFORMED_GUID_ERROR_NUMBER} from "../constants/mssql_errors";
@@ -11,17 +12,23 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { PendingAccountVerificationService } from "./PendingAccountVerification";
 import { PendingAccountVerification } from "../entities/PendingAccountVerification";
-import { SignUpResponse } from "../models/Auth";
+import { SignedAuthenticationJWTData, SignUpResponse } from "../models/Auth";
 import { MalformedGuid } from "../exceptions/MalformedGuid";
 import { sendEmail } from "../utils/Mailer";
 import { AccountSecurityQuestion } from "../entities/AccountSecurityQuestion";
+import { AccountActivity } from "src/entities/AccountActivity";
+import { PlatformModel } from "src/models/Platform";
+import parser from "ua-parser-js";
 
 @Service()
 export class AccountService {
+  @InjectContext()
+  $ctx?: PlatformContext;
+
   private connection: ConnectionManager;
   constructor(
     private typeORMService: TypeORMService,
-    private pendingAccountVerificationService: PendingAccountVerificationService
+    private pendingAccountVerificationService: PendingAccountVerificationService,
   ) {}
   private entityManager = getManager();
   private accountRepository = getRepository(Account);
@@ -142,12 +149,47 @@ export class AccountService {
 
   async getAccountById(id: string): Promise<Account | undefined> {
     try {
-      const account = await this.accountRepository.createQueryBuilder("account")
-        .innerJoinAndSelect("account.accountRoles", "accountRole")
-        .where("account.id = :id")
-        .setParameter("id", id)
-        .getOne();
-      return account;
+      let error: Exception = {} as Exception;
+      const { signedData: { accountId } } = this.$ctx?.request.req.app.locals.signedData as SignedAuthenticationJWTData
+      const platform: PlatformModel = {userAgent: parser(this.$ctx?.request.headers["user-agent"]), ip: this.$ctx?.request.headers["x-real-ip"]?.toString() ?? ""}
+      console.log('dfsdf', this.$ctx?.request.headers["user-agent"])
+      const getAccountResult = await getManager().transaction(async (transactionalEntityManager) => {
+
+        const account = await transactionalEntityManager.createQueryBuilder(Account, "account")
+          .innerJoinAndSelect("account.accountRoles", "accountRole")
+          .where("account.id = :accountId")
+          .setParameter("accountId", accountId)
+          .getOne();
+        if (!account) {
+          error = new NotFound('Cuenta origen no encontrada')
+          error.errors = [{ code: 'E0001' }]
+          throw (error)
+        }
+        const targetAccount = await transactionalEntityManager.createQueryBuilder(Account, "account")
+          .innerJoinAndSelect("account.accountRoles", "accountRole")
+          .where("account.id = :id")
+          .setParameter("id", id)
+          .getOne();
+        if (!targetAccount) {
+          error = new NotFound('Cuenta objetivo no encontrada')
+          error.errors = [{ code: 'E0001' }]
+          throw (error)
+        }
+
+        await transactionalEntityManager.insert(AccountActivity, { 
+          activityType: "account_view_target_account",
+          accountId: account.id,
+          username: account.username,
+          targetUsername: targetAccount.username,
+          ip: platform.ip,
+          browserName: platform.userAgent.browser.name,
+          browserVersion: platform.userAgent.browser.version,
+          osPlatform: platform.userAgent.os.name + " " + platform.userAgent.os.version,
+        });
+
+        return targetAccount
+      })
+      return getAccountResult;
     } catch (e) {
       if (e?.number === MSSQL_DUP_ENTRY_ERROR_NUMBER) {
         throw new DuplicateEntry(e?.message);
@@ -187,16 +229,45 @@ export class AccountService {
     }
   }
 
-  async getAccountRoles(id: string): Promise<AccountRole[] | undefined> {
+  async getAccountRoles(accountId: string): Promise<string[] | undefined> {
     try {
-      const account = await this.accountRoleRepository.createQueryBuilder("accountRole")
-        .where("accountRole.accountId = :id", { id: id })
+      const accountRolesResult = await this.accountRoleRepository.createQueryBuilder("accountRole")
+        .where("accountRole.accountId = :accountId")
         .select(["accountRole.roleName"])
+        .setParameter("accountId", accountId)
         .getMany();
-      return account;
+        const accountRoles = accountRolesResult.map(ar => ar.roleName)
+      return accountRoles;
     } catch (e) {
       if (e?.name === "EntityNotFoundError") {
-        throw new EntryNotFound(`Account with id: ${id} does not exist.`);
+        throw new EntryNotFound(`Account with id: ${accountId} does not exist.`);
+      }
+      throw e;
+    }
+  }
+
+  async getAccountActivities(accountId: string): Promise<AccountActivity[] | undefined> {
+    try {
+      let error: Exception = {} as Exception;
+      const getAccountActivitiesResult = await getManager().transaction(async (transactionalEntityManager) => {
+        const accountActivities = await transactionalEntityManager.createQueryBuilder(AccountActivity, "accountActivity")
+          .where("accountActivity.accountId = :accountId")
+          .setParameter("accountId", accountId)
+          .getMany();
+        if (!accountActivities) {
+          error = new NotFound('Cuenta origen no encontrada')
+          error.errors = [{ code: 'E0001' }]
+          throw (error)
+        }
+        return accountActivities
+      })
+      return getAccountActivitiesResult;
+    } catch (e) {
+      if (e?.number === MSSQL_DUP_ENTRY_ERROR_NUMBER) {
+        throw new DuplicateEntry(e?.message);
+      }
+      else if (e?.number === MSSQL_MALFORMED_GUID_ERROR_NUMBER) {
+        throw new MalformedGuid();
       }
       throw e;
     }

@@ -1,4 +1,4 @@
-import {BodyParams, Controller, Delete, Get, PathParams, PlatformResponse, Post, Put, QueryParams, Res} from "@tsed/common";
+import {BodyParams, Controller, Delete, Get, PathParams, PlatformResponse, Post, Put, QueryParams, Res, UseBefore} from "@tsed/common";
 import {Groups, Returns, Status, Summary} from "@tsed/schema";
 import {Account} from "../entities/Account";
 import { SignUpResponse } from "../models/Auth";
@@ -6,6 +6,8 @@ import {CustomError} from "../models/CustomError";
 import {AccountService} from "../services/Account";
 import {DeleteResult} from "typeorm";
 import { AccountSecurityQuestion } from "../entities/AccountSecurityQuestion";
+import { AuthenticationRequired } from "src/middlewares/AuthenticationRequired";
+import { AccountActivity } from "src/entities/AccountActivity";
 
 @Controller("/")
 export class AccountController {
@@ -39,6 +41,7 @@ export class AccountController {
     }
   }
 
+  @UseBefore(AuthenticationRequired)
   @Get("/account/:id")
   @Summary("Gets an account by id")
   @(Returns(200, Account).Groups("read").Description("Returns an account by id"))
@@ -58,6 +61,31 @@ export class AccountController {
     try {
       const account = await this.accountService.getAccountByEmail(email);
       return account;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  @Get("/account/accountRoles/:accountId")
+  @Summary("Gets an account by id")
+  @(Returns(200, AccountSecurityQuestion).Groups("read").Description("Returns an account security question"))
+  async getAccountRoles(@PathParams("accountId") accountId: string): Promise<string[] | undefined> {
+    try {
+      const accountRoles = await this.accountService.getAccountRoles(accountId);
+      return accountRoles;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  @UseBefore(AuthenticationRequired)
+  @Get("/account/accountActivities/:accountId")
+  @Summary("Gets an account by id")
+  @(Returns(200, AccountActivity).Groups("read").Description("Returns the activities of a specific account"))
+  async getAccountActivities(@PathParams("accountId") accountId: string): Promise<AccountActivity[] | undefined> {
+    try {
+      const accountActivities = await this.accountService.getAccountActivities(accountId);
+      return accountActivities;
     } catch (e) {
       throw e;
     }

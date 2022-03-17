@@ -53,6 +53,7 @@ import { AccountActivity } from "./AccountActivity";
     "state",
     "city",
     "email",
+    "username",
     "gender",
     "identificationDocument",
     "identificationDocumentType",
