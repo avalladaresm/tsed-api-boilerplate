@@ -1,9 +1,10 @@
 import {ResponseErrorObject} from "@tsed/common";
 import {NotFound} from "@tsed/exceptions";
+import { ErrorResponseProperties } from "src/models/ErrorResponse";
 
-export class EntryNotFound extends NotFound implements ResponseErrorObject {
-  constructor(message?: string) {
-    super(message ?? "Entry not found");
-    this.name = "ENTRY_NOT_FOUND";
+export class EntryNotFound<T> extends NotFound implements ResponseErrorObject {
+  constructor(errorObject: ErrorResponseProperties<T>) {
+    super(errorObject.message);
+    this.body = errorObject;
   }
 }

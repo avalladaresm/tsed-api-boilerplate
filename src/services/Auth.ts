@@ -1,5 +1,5 @@
 import { PlatformResponse, Service } from "@tsed/common";
-import { BadRequest, Exception, NotFound, Unauthorized } from "@tsed/exceptions";
+import { BadRequest, Exception, NotFound } from "@tsed/exceptions";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { hotp } from 'otplib';
@@ -11,9 +11,14 @@ import { AccountRole } from "../entities/AccountRole";
 import { ForgottenPasswordOtpHash } from "../entities/ForgottenPasswordOtpHash";
 import { PendingAccountVerification } from "../entities/PendingAccountVerification";
 import { EntryNotFound } from "../exceptions/EntryNotFound";
-import { ForgotPasswordModel, ResendVerificationEmailModel, SignedAuthenticationJWTData, SignInModel, SignInResult, SignUpResponse, UpdatePasswordModel, VerifyOtpModel } from "../models/Auth";
+import { ForgotPasswordModel, ResendVerificationEmailModel, SignedAuthenticationJWTData, SignInModel, SignInResult, UpdatePasswordModel, VerifyOtpModel, VerifyPasswordModel } from "../models/Auth";
 import { sendEmail } from "../utils/Mailer";
 import { AccountService } from "./Account";
+import { ErrorResponse } from "src/models/ErrorResponse";
+import { returnSuccessResponse, throwErrorResponse } from "src/utils";
+import { SuccessResponse } from "src/models/SuccessResponse";
+import { CreatedAccountResponse } from "src/models/Account";
+
 
 @Service()
 export class AuthService {
@@ -28,53 +33,77 @@ export class AuthService {
     this.connection = getConnectionManager();
   }
 
-  async signin(data: SignInModel, platform: PlatformModel): Promise<SignInResult> {
+  async signin(data: SignInModel, platform: PlatformModel): Promise<SuccessResponse<SignInResult>> {
     try {
-      let error: Exception = {} as Exception;
       const { email, password } = data;
       const loginRes = await getManager().transaction(async (transactionalEntityManager) => {
         const account = await transactionalEntityManager.createQueryBuilder(Account, "account")
         .where("account.email = :email")
         .setParameter("email", email)
         .getOne();
+
         if (!account) {
-          error = new NotFound('Cuenta no encontrada')
-          error.errors = [{ code: 'E0001' }]
-          throw (error)
+          return throwErrorResponse({
+            code: "e-auth-0001",
+            message: "Cuenta no encontrada",
+            status: 404,
+            value: null,
+            exceptionType: "EntryNotFound"
+          })
         }
         if (!bcrypt.compareSync(password, account.password)) {
-          error = new Unauthorized('Usuario o clave incorrecta.')
-          error.errors = [{ code: 'E0002', message: 'Usuario o clave incorrecta.' }]
-          throw (error)
+          return throwErrorResponse({
+            code: "e-auth-0002",
+            message: "Usuario o clave incorrecta.",
+            status: 400,
+            value: null,
+            exceptionType: "MalformedGuid"
+          })
         }
         if (!account?.isActive) {
-          error = new Unauthorized('Esta cuenta no está activa!')
-          error.errors = [{ code: 'E0003', message: 'Esta cuenta no está activa!' }]
-          throw (error)
+          return throwErrorResponse({
+            code: "e-auth-0003",
+            message: "Esta cuenta no está activa.",
+            status: 401,
+            value: null,
+            exceptionType: "MalformedGuid"
+          })
         }
         if (!account?.isVerified) {
-          error = new Unauthorized('Esta cuenta no ha sido verificada!')
-          error.errors = [{ code: 'E0004', message: 'Esta cuenta no ha sido verificada!' }]
-          throw (error)
+          return throwErrorResponse({
+            code: "e-auth-0004",
+            message: "Esta cuenta no ha sido verificada.",
+            status: 401,
+            value: null,
+            exceptionType: "MalformedGuid"
+          })
         }
         
         const accountRolesResult = await transactionalEntityManager.createQueryBuilder(AccountRole, "accountRole")
-        .where("accountRole.accountId = :accountId")
-        .select(["accountRole.roleName"])
-        .setParameter("accountId", account.id)
-        .getMany();
+          .where("accountRole.accountId = :accountId")
+          .select(["accountRole.roleName"])
+          .setParameter("accountId", account.id)
+          .getMany();
         if (!accountRolesResult) {
-          error = new Unauthorized('No se encontraron roles para esta cuenta!')
-          error.errors = [{ code: 'E0005', message: 'No se encontraron roles para esta cuenta!' }]
-          throw (error)
+          return throwErrorResponse({
+            code: "e-auth-0005",
+            message: "No se encontraron roles para esta cuenta.",
+            status: 404,
+            value: null,
+            exceptionType: "MalformedGuid"
+          })
         }
         const accountRoles = accountRolesResult.map(ar => ar.roleName)
         const signedData = { accountId: account.id, role: accountRoles, email: data.email };
 
         if (!process.env.JWT_SECRET) {
-          error = new BadRequest('No se pudo determinar las credenciale!')
-          error.errors = [{ code: 'E0006', message: 'No se pudo determinar las credenciale!' }]
-          throw (error)
+          return throwErrorResponse({
+            code: "e-auth-0006",
+            message: "No se pudo determinar las credenciales.",
+            status: 400,
+            value: null,
+            exceptionType: "MalformedGuid"
+          })
         }
         const token = jwt.sign({ signedData }, process.env.JWT_SECRET, {
           expiresIn: Number(process.env.JWT_EXPIRESIN_LOGIN),
@@ -91,7 +120,14 @@ export class AuthService {
           osPlatform: platform.userAgent.os.name + " " + platform.userAgent.os.version,
         });
 
-        return { at: token, r: accountRoles, uid: account.id }
+        return returnSuccessResponse({
+          code: "s-auth-0001",
+          message: "Login successful!",
+          status: 200,
+          value: {
+            at: token, r: accountRoles, uid: account.id
+          }
+        })
       })
       return loginRes
     } catch (e) {
@@ -99,18 +135,18 @@ export class AuthService {
     }
   }
 
-  async signup(data: Account, response: PlatformResponse): Promise<SignUpResponse | undefined> {
-    try {
-      //data.phoneNumber = data.phoneNumber. includes('+') ? data.phoneNumber : '+' + data.phoneNumber
-      let error: Exception = {} as Exception;
-              
+  async signup(data: Account, response: PlatformResponse): Promise<ErrorResponse<CreatedAccountResponse> | SuccessResponse<CreatedAccountResponse>> {
+    try {              
       const createdAccount = await this.accountService.createAccount(data, response);
       if (!createdAccount) {
-        error = new BadRequest('Ocurrio un error al crear la cuenta')
-        error.errors = [{ code: 'E0012' }]
-        throw (error)
+        throwErrorResponse({
+          code: "e-auth-0001",
+          message: "No se pudo crear la cuenta.",
+          status: 400,
+          value: null,
+          exceptionType: "MalformedGuid"
+        })
       }
-
       return createdAccount;
     }
     catch (e) {

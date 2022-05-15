@@ -24,7 +24,7 @@ export class AccountRole {
   idInc: number;
 
   @PrimaryColumn()
-  accountId: number;
+  accountId: string;
 
   @Property()
   @ManyToOne(() => Account, (account) => account.accountRoles, {onDelete: "CASCADE"})

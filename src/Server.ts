@@ -11,6 +11,7 @@ import "@tsed/swagger";
 import "@tsed/typeorm";
 import { config, rootDir } from "./config";
 import "./filters/ResourceNotFoundFilter";
+import "./exceptions/APIExceptionFilter";
 import { OpenSpec3 } from "@tsed/openspec";
 
 const spec: Partial<OpenSpec3> = {

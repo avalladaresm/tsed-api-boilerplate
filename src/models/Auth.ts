@@ -1,7 +1,6 @@
 import { Property, Schema } from "@tsed/schema";
 import { Account } from "../entities/Account";
 import jwt from "jsonwebtoken";
-import { AccountRole } from "../entities/AccountRole";
 
 @Schema({})
 export class SignInModel {
@@ -20,7 +19,7 @@ class OnlyEmailModel {
 @Schema({})
 export class SignUpResponse {
   @Property()
-  account: Account | undefined;
+  account: Account;
 
   @Property()
   accessToken: string;
@@ -69,6 +68,12 @@ export class VerifyOtpModel {
 
   @Property()
   email: string;
+}
+
+@Schema({})
+export class VerifyPasswordModel {
+  @Property()
+  password: string;
 }
 
 @Schema({})

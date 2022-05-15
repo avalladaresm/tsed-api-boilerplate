@@ -46,7 +46,7 @@ export class AuthLog {
   @Column("int", {generated: "increment"})
   idInc?: number;
 
-  @Column()
+  @Column("varchar", {length: 255, nullable: false})
   username: string;
 
   @Property()

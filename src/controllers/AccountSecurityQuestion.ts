@@ -3,7 +3,9 @@ import {Groups, Returns, Status, Summary} from "@tsed/schema";
 import {AccountSecurityQuestion} from "../entities/AccountSecurityQuestion";
 import {CustomError} from "../models/CustomError";
 import {AccountSecurityQuestionService} from "../services/AccountSecurityQuestion";
-import {DeleteResult, InsertResult} from "typeorm";
+import {DeleteResult} from "typeorm";
+import { ErrorResponse } from "src/models/ErrorResponse";
+import { SuccessResponse } from "src/models/SuccessResponse";
 
 @Controller("/")
 export class AccountSecurityQuestionController {
@@ -21,11 +23,10 @@ export class AccountSecurityQuestionController {
     }
   }
 
-  @Post("/accountSecurityQuestion")
+  @Post("/account-security-question")
   @Summary("Creates an account security question")
-  @(Returns(201, AccountSecurityQuestion).Groups("read").Description("Returns the instance of the created account security question"))
   @(Status(400, CustomError).Description("Validation error or data is malformed"))
-  async createAccountSecurityQuestion(@BodyParams() @Groups("create") data: AccountSecurityQuestion): Promise<InsertResult> {
+  async createAccountSecurityQuestion(@BodyParams() @Groups("create") data: AccountSecurityQuestion): Promise<ErrorResponse<AccountSecurityQuestion | null> | SuccessResponse<AccountSecurityQuestion | null>> {
     try {
       const accountSecurityQuestion = await this.accountSecurityQuestionService.createAccountSecurityQuestion(data);
       return accountSecurityQuestion;
@@ -34,10 +35,9 @@ export class AccountSecurityQuestionController {
     }
   }
 
-  @Put("/accountSecurityQuestion/:id")
+  @Put("/account-security-question/:id")
   @Summary("Updates an account security question by id")
-  @(Returns(200, AccountSecurityQuestion).Groups("read").Description("Returns the updated instance of the account security question"))
-  async updateAccountSecurityQuestion(@PathParams("id") id: string, @BodyParams() @Groups("update") data: AccountSecurityQuestion): Promise<Partial<AccountSecurityQuestion>> {
+  async updateAccountSecurityQuestion(@PathParams("id") id: string, @BodyParams() @Groups("update") data: AccountSecurityQuestion): Promise<ErrorResponse | SuccessResponse> {
     try {
       const accountSecurityQuestion = await this.accountSecurityQuestionService.updateAccountSecurityQuestion(id, data);
       return accountSecurityQuestion;

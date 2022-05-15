@@ -1,11 +1,14 @@
 import {BodyParams, Controller, PlatformRequest, PlatformResponse, Post, QueryParams, Req, Res} from "@tsed/common";
-import {ContentType, Get, Groups, Put, Returns, Status, Summary} from "@tsed/schema";
+import {ContentType, Get, Groups, Put, Status, Summary} from "@tsed/schema";
 import {Account} from "../entities/Account";
-import { ForgotPasswordModel, ResendVerificationEmailModel, SignInModel, SignInResult, SignUpResponse, UpdatePasswordModel, VerifyOtpModel } from "../models/Auth";
+import { ForgotPasswordModel, ResendVerificationEmailModel, SignInModel, SignInResult, UpdatePasswordModel, VerifyOtpModel } from "../models/Auth";
 import { CustomError } from "../models/CustomError";
 import {AuthService} from "../services/Auth";
 import parser from "ua-parser-js";
 import { PlatformModel } from "../models/Platform";
+import { ErrorResponse } from "src/models/ErrorResponse";
+import { CreatedAccountResponse } from "src/models/Account";
+import { SuccessResponse } from "src/models/SuccessResponse";
 
 
 @Controller("/auth")
@@ -15,7 +18,7 @@ export class AuthController {
   @Post("/signin")
   @Summary("Signs in an account")
   @ContentType("application/json")
-  async login(@BodyParams() data: SignInModel, @Req() req: PlatformRequest): Promise<SignInResult> {
+  async login(@BodyParams() data: SignInModel, @Req() req: PlatformRequest): Promise<SuccessResponse<SignInResult>> {
     try {
       const platform: PlatformModel = {userAgent: parser(req.headers["user-agent"]), ip: req.headers["x-real-ip"]?.toString() ?? ""}
       const res = await this.authService.signin(data, platform);
@@ -28,9 +31,8 @@ export class AuthController {
   @Post('/signup')
   @Summary("Sign up an account")
   @ContentType("application/json")
-  @(Returns(201, SignUpResponse).Groups("read").Description("Returns the instance of the created account"))
   @(Status(400, CustomError).Description("Validation error or data is malformed"))
-  async signup(@BodyParams('data') @Groups("create") data: Account, @Res() response: PlatformResponse): Promise<SignUpResponse | undefined> {
+  async signup(@BodyParams() @Groups("create") data: Account, @Res() response: PlatformResponse): Promise<ErrorResponse<CreatedAccountResponse> | SuccessResponse<CreatedAccountResponse>> {
     try {
       const res = await this.authService.signup(data, response)
       return res

@@ -1,13 +1,16 @@
 import {BodyParams, Controller, Delete, Get, PathParams, PlatformResponse, Post, Put, QueryParams, Res, UseBefore} from "@tsed/common";
-import {Groups, Returns, Status, Summary} from "@tsed/schema";
+import {ContentType, Groups, Returns, Status, Summary} from "@tsed/schema";
 import {Account} from "../entities/Account";
-import { SignUpResponse } from "../models/Auth";
 import {CustomError} from "../models/CustomError";
 import {AccountService} from "../services/Account";
 import {DeleteResult} from "typeorm";
 import { AccountSecurityQuestion } from "../entities/AccountSecurityQuestion";
 import { AuthenticationRequired } from "src/middlewares/AuthenticationRequired";
 import { AccountActivity } from "src/entities/AccountActivity";
+import { CreatedAccountResponse } from "src/models/Account";
+import { ErrorResponse } from "src/models/ErrorResponse";
+import { SuccessResponse } from "src/models/SuccessResponse";
+import { SecurityQuestion } from "src/entities/SecurityQuestion";
 
 @Controller("/")
 export class AccountController {
@@ -27,12 +30,12 @@ export class AccountController {
 
   @Post("/account")
   @Summary("Creates an account")
-  @(Returns(201, Account).Groups("read").Description("Returns the instance of the created account"))
   @(Status(400, CustomError).Description("Validation error or data is malformed"))
+  @(Status(401, CustomError).Description("Validation error or data is malformed"))
   async createAccount(
     @BodyParams() @Groups("create") data: Account,
     @Res() response: PlatformResponse
-  ): Promise<SignUpResponse | undefined> {
+  ): Promise<ErrorResponse<CreatedAccountResponse> | SuccessResponse<CreatedAccountResponse>> {
     try {
       const account = await this.accountService.createAccount(data, response);
       return account;
@@ -66,7 +69,7 @@ export class AccountController {
     }
   }
 
-  @Get("/account/accountRoles/:accountId")
+  @Get("/account/:accountId/account-roles")
   @Summary("Gets an account by id")
   @(Returns(200, AccountSecurityQuestion).Groups("read").Description("Returns an account security question"))
   async getAccountRoles(@PathParams("accountId") accountId: string): Promise<string[] | undefined> {
@@ -75,6 +78,30 @@ export class AccountController {
       return accountRoles;
     } catch (e) {
       throw e;
+    }
+  }
+
+  @Get("/account/:accountId/security-question")
+  @Summary("Gets an account security question by id")
+  async getAccountSecurityQuestion(@PathParams("accountId") accountId: string): Promise<ErrorResponse<SecurityQuestion> | SuccessResponse<SecurityQuestion>> {
+    try {
+      const securityQuestion = await this.accountService.getAccountSecurityQuestion(accountId);
+      return securityQuestion;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  @UseBefore(AuthenticationRequired)
+  @Post('/account/verify-password')
+  @ContentType('application/json')
+  async verifyAccountPassword(@BodyParams("password") password: string): Promise<ErrorResponse<boolean> | SuccessResponse<boolean>> {
+    try {
+      const isValid = await this.accountService.verifyAccountPassword(password)
+      return isValid
+    }
+    catch (e) {
+      throw e
     }
   }
 
@@ -91,13 +118,24 @@ export class AccountController {
     }
   }
 
+  @Put("/account/profile")
+  @Summary("Updates an account by id")
+  async updateAccountProfile(@BodyParams() @Groups("update") data: Account): Promise<ErrorResponse<Account | null> | SuccessResponse<Account | null>> {
+    try {
+      const account = await this.accountService.updateAccountProfile(data);
+      return account;
+    } catch (e) {
+      throw e;
+    }
+  }
+
   @Put("/account/:id")
   @Summary("Updates an account by id")
   @(Returns(200, Account).Groups("read").Description("Returns the updated instance of the account"))
   async updateAccount(
     @PathParams("id") id: string,
     @BodyParams() @Groups("update") data: Account
-  ): Promise<Partial<Account>> {
+  ): Promise<ErrorResponse<Account | null> | SuccessResponse<Account | null>> {
     try {
       const account = await this.accountService.updateAccount(id, data);
       return account;
@@ -112,18 +150,6 @@ export class AccountController {
   async deleteAccount(@PathParams("id") id: string): Promise<DeleteResult> {
     try {
       const account = await this.accountService.deleteAccount(id);
-      return account;
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  @Get("/account/securityQuestion/:accountId")
-  @Summary("Gets an account by id")
-  @(Returns(200, AccountSecurityQuestion).Groups("read").Description("Returns an account security question"))
-  async getAccountSecurityQuestion(@PathParams("accountId") accountId: string): Promise<AccountSecurityQuestion | undefined> {
-    try {
-      const account = await this.accountService.getAccountSecurityQuestion(accountId);
       return account;
     } catch (e) {
       throw e;

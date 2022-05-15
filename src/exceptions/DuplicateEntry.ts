@@ -1,12 +1,10 @@
 import {ResponseErrorObject} from "@tsed/common";
 import {Conflict} from "@tsed/exceptions";
+import { ErrorResponseProperties } from "src/models/ErrorResponse";
 
-export class DuplicateEntry extends Conflict implements ResponseErrorObject {
-  constructor(message?: string) {
-    const extractedSqlErrorMessageIndex = message?.indexOf("The duplicate key value");
-    const extractedSqlErrorMessage = message?.slice(extractedSqlErrorMessageIndex);
-    super("Duplicate entry error");
-    this.name = "DUP_ENTRY_ERROR";
-    this.errors = !!extractedSqlErrorMessage ? [{message: extractedSqlErrorMessage}] : [];
+export class DuplicateEntry<T> extends Conflict implements ResponseErrorObject {
+  constructor(errorObject: ErrorResponseProperties<T>) {
+    super(errorObject.message);
+    this.body = errorObject;
   }
 }

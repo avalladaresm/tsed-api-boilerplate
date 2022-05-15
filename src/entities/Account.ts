@@ -9,7 +9,7 @@ import { AuthLog } from "./AuthLog";
 import { AccountSecurityQuestion } from "./AccountSecurityQuestion";
 import { AccountActivity } from "./AccountActivity";
 
-@BeforeDeserialize((data: Record<string, unknown>) => {
+@BeforeDeserialize((data: Account) => {
   if (!data.name) {
     const error = new ValidationError("Validation error", [{message: "Field 'name' is required."}]);
     throw error;
@@ -21,26 +21,12 @@ import { AccountActivity } from "./AccountActivity";
   create: [
     "name",
     "phoneNumber",
-    "dob",
-    "country",
-    "state",
-    "city",
+    "username",
     "email",
-    "password",
-    "gender",
-    "identificationDocument",
-    "identificationDocumentType"
+    "password"
   ],
   update: [
-    "name",
-    "phoneNumber",
-    "dob",
-    "country",
-    "state",
-    "city",
-    "gender",
-    "identificationDocument",
-    "identificationDocumentType"
+    "name"
   ],
   read: [
     "id",
@@ -55,8 +41,6 @@ import { AccountActivity } from "./AccountActivity";
     "email",
     "username",
     "gender",
-    "identificationDocument",
-    "identificationDocumentType",
     "isVerified",
     "isActive",
     "createdAt",
@@ -69,7 +53,6 @@ import { AccountActivity } from "./AccountActivity";
 @Unique("UQ_phoneNumber", ["phoneNumber"])
 @Unique("UQ_username", ["username"])
 @Unique("UQ_email", ["email"])
-@Unique("UQ_identificationDocument", ["identificationDocument"])
 export class Account {
   @Property()
   @Example("525A60BE-6AF5-EB11-B563-DC984098D2B6")
@@ -114,12 +97,12 @@ export class Account {
 
   @Property()
   @Example("2021-07-13")
-  @Column("date", {nullable: false})
+  @Column("date", {nullable: true})
   dob: string;
 
   @Property()
   @Example("Latvia")
-  @Column("varchar", {length: 255, nullable: false})
+  @Column("varchar", {length: 255, nullable: true})
   country: string;
 
   @Property()
@@ -134,7 +117,7 @@ export class Account {
 
   @Property()
   @Example("Jonas23")
-  @Column("varchar", {length: 255, nullable: true})
+  @Column("varchar", {length: 255, nullable: false})
   username: string;
 
   @Property()
@@ -162,7 +145,7 @@ export class Account {
   @Column("bit", {default: 1})
   isActive: boolean;
 
-  @Property()
+/*   @Property()
   @Example("28938923")
   @Column("varchar", {length: 255, nullable: true})
   identificationDocument: string;
@@ -170,7 +153,7 @@ export class Account {
   @Property()
   @Example("Driver's License")
   @Column("varchar", {length: 25, nullable: true})
-  identificationDocumentType: string;
+  identificationDocumentType: string; */
 
   @Property()
   @Example("2021-08-05T03:27:18.690Z")

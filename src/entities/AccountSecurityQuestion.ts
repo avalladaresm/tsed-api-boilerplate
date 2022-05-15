@@ -8,6 +8,13 @@ import { SecurityQuestion } from "./SecurityQuestion";
   create: [
     "accountId",
     "securityQuestionId",
+    "securityQuestionAnswer"
+  ],
+  update: [
+    "id",
+    "accountId",
+    "securityQuestionId",
+    "securityQuestionAnswer"
   ],
   read: [
     "id",
@@ -29,7 +36,6 @@ export class AccountSecurityQuestion {
   idInc: number;
 
   @Property()
-  @PrimaryColumn()
   accountId: string;
 
   @OneToOne(() => Account, (account) => account.accountSecurityQuestion, {onDelete: "CASCADE"})
@@ -37,10 +43,14 @@ export class AccountSecurityQuestion {
   account: Account;
 
   @Property()
-  @PrimaryColumn()
   securityQuestionId: string;
 
-  @OneToOne(() => SecurityQuestion, {eager: true, onDelete: "CASCADE", onUpdate: "CASCADE"})
+  @Property()
+  @Example("Maya")
+  @Column("varchar", {length: 1000})
+  securityQuestionAnswer: string;
+
+  @OneToOne(() => SecurityQuestion, {eager: true, cascade: ["update"], onDelete: "CASCADE", onUpdate: "CASCADE"})
   @JoinColumn({name: "securityQuestionId", referencedColumnName: "id"})
   securityQuestion: SecurityQuestion;
 
